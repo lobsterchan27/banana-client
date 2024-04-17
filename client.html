@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Web UI</title>
+</head>
+
+<body>
+    <h1>My Web UI</h1>
+    <input type="text" id="promptInput" placeholder="Enter prompt" />
+    <button onclick="makeAPIRequest()">Send to Server</button>
+    <div id="response"></div>
+
+    <script>
+        async function makeAPIRequest() {
+            const promptInput = document.getElementById('promptInput');
+            const prompt = promptInput.value;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/extra/generate/stream', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    console.log('Received data:', chunk);
+                    document.getElementById('response').textContent += chunk + '\n';
+                }
+            } catch (error) {
+                console.error('Error sending request:', error);
+                document.getElementById('response').textContent += 'Error: ' + error.message + '\n';
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "banana_web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "double-ended-queue": "^2.1.0-0",
+    "eventsource": "^2.0.2",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "text-encoding": "^0.7.0"
+  }
+}
