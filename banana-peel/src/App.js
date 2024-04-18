@@ -1,19 +1,21 @@
+import { useState } from "react";
 import "./App.css";
 import Form from "./components/Form";
-import useForm from "./hooks/useForm";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 function App() {
-  const [form, setForm] = useForm(
+  const [textResponse, setTextResponse] = useState("");
+  const [form, setForm] = useLocalStorage(
     {
-      name: "",
-      email: "",
+      prompt: "",
     },
     "form"
   );
 
   return(
     <div className="App">
-      <Form form={form} setForm={setForm} />
+      <h4>{textResponse}</h4>
+      <Form form={form} setForm={setForm} setTextResponse={setTextResponse} />
     </div>
   );
 }
