@@ -5,11 +5,9 @@ const port = process.env.PORT || 5000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/hello', (req, res) => {
-    res.json({ message: 'Hello, World!' });
-});
-
 app.use('/kobold', require('./src/kobold').router);
+
+app.use('/banana', require('./src/banana').router);
 
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
