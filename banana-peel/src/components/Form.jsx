@@ -40,6 +40,7 @@ const Form = ({ form, setForm, setTextResponse }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setTextResponse("");
     const prompt = e.target.elements.prompt.value;
     fetchLMM(prompt);
   };
