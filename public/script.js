@@ -1,5 +1,11 @@
-async function makeAPIRequest() {
+async function text_generate() {
+    console.log('text_generate called');
+    const api_server = document.getElementById('api_server').value;
     const prompt = document.getElementById('prompt').value;
+    let payload = {
+        'api_server': api_server,
+        'prompt': prompt,
+    }
 
     try {
         const response = await fetch('/kobold/generate', {
@@ -7,7 +13,7 @@ async function makeAPIRequest() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ prompt })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -17,12 +23,22 @@ async function makeAPIRequest() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
+        let accumulator = '';
+
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = decoder.decode(value);
-            console.log('Received data:', chunk);
-            document.getElementById('response').textContent += chunk + '\n';
+            accumulator += chunk;
+
+            let boundary = accumulator.indexOf('\n\n');
+            while (boundary !== -1) {
+                const message = accumulator.slice(0, boundary);
+                console.log(message);
+                document.getElementById('response').textContent += message + '\n\n';
+                accumulator = accumulator.slice(boundary + 2);
+                boundary = accumulator.indexOf('\n\n');
+            }
         }
     } catch (error) {
         console.error('Error sending request:', error);
@@ -45,4 +61,9 @@ async function text2speech() {
         console.error('Error sending request:', error);
         document.getElementById('response').textContent += 'Error: ' + error.message + '\n';
     }
+}
+
+export {
+    text_generate,
+    text2speech
 }
