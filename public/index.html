@@ -10,13 +10,17 @@
     <input type="text" id="api_server" placeholder="enter server api here">
     <input type="text" id="prompt" placeholder="Enter your prompt here">
     <button onclick="text_generate()">Get Message</button>
+    <button onclick='abort()'>Abort</button>
     <p id="response"></p>
+    <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
     <button onclick='text2speech()'>Text to Speech</button>
+    
 
     <script type='module'>
         import {
             text_generate,
-            text2speech
+            text2speech,
+            abort
         } from './script.js';
     
         window.text_generate = text_generate;

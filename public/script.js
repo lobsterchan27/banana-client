@@ -1,3 +1,5 @@
+let controller;
+
 async function text_generate() {
     console.log('text_generate called');
     const api_server = document.getElementById('api_server').value;
@@ -5,7 +7,10 @@ async function text_generate() {
     let payload = {
         'api_server': api_server,
         'prompt': prompt,
+        'can_abort': true
     }
+
+    const controller = new AbortController();
 
     try {
         const response = await fetch('/kobold/generate', {
@@ -13,7 +18,8 @@ async function text_generate() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
 
         if (!response.ok) {
@@ -46,10 +52,25 @@ async function text_generate() {
     }
 }
 
+async function abort() {
+    controller.abort();
+}
+
 async function text2speech() {
+    const prompt = document.getElementById('tts_prompt').value;
+
+    let payload = {
+        'prompt': prompt,
+        'voice': 'reference'
+    }
+
     try {
         const response = await fetch('/banana/text2speech', {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -65,5 +86,6 @@ async function text2speech() {
 
 export {
     text_generate,
-    text2speech
+    text2speech,
+    abort
 }
