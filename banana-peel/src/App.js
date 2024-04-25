@@ -1,21 +1,22 @@
-import { useState } from "react";
 import "./App.css";
 import Form from "./components/Form";
 import useLocalStorage from "./hooks/useLocalStorage";
 
 function App() {
-  const [textResponse, setTextResponse] = useState("");
+  const [textResponse, setTextResponse] = useLocalStorage('textResponse', []);
   const [form, setForm] = useLocalStorage(
+    "form",
     {
       prompt: "",
-    },
-    "form"
+    }
   );
+  const currentIndex = textResponse.length - 1;
 
   return(
     <div className="App">
-      <h4>{textResponse}</h4>
-      <Form form={form} setForm={setForm} setTextResponse={setTextResponse} />
+      <p></p>
+      <p className="textResponse">{textResponse[textResponse.length-1]}</p>
+      <Form form={form} setForm={setForm} currentIndex={currentIndex} setTextResponse={setTextResponse} />
     </div>
   );
 }

@@ -57,7 +57,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     };
 
 
-    const url = 'http://96.253.117.172:8000/api/extra/generate/stream';
+    const url = 'http://127.0.0.1:8080/api/extra/generate/stream';
     const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
 
     const streaming = true;
