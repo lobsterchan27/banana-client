@@ -105,10 +105,8 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     };
 
 
-<<<<<<< HEAD
     const url = 'http://127.0.0.1:8080/api/extra/generate/stream';
     const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
-=======
     let streaming = true;
     if (request.body.streaming !== undefined) {
         streaming = request.body.streaming;
@@ -124,7 +122,6 @@ router.post('/generate', jsonParser, async function (request, response_generate)
             if (!response.ok) {
                 const errorText = await response.text();
                 console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
->>>>>>> fc9913d5fb99304e794a40472a1ee5a30c5d40d7
 
                 try {
                     const errorJson = JSON.parse(errorText);
