@@ -1,11 +1,15 @@
 import React from "react";
 import "./form.css";
 
-const Form = ({ form, setForm, setTextResponse, currentIndex }) => {
+const Form = ({ form, setForm, textResponse, setTextResponse }) => {
+
+  let currentIndex = textResponse.length - 1;
+
   async function fetchLMM(prompt) {
     try {
       const payload = {
         prompt: prompt,
+        api_server: "http://localhost:8080",
       };
       const response = await fetch("http://localhost:5000/kobold/generate", {
         method: "POST",
@@ -19,36 +23,23 @@ const Form = ({ form, setForm, setTextResponse, currentIndex }) => {
         throw new Error(`HTTP error ${response.status}`);
       }
 
-      setTextResponse((prev) => {
-        let updatedArray = [...prev];
-        updatedArray.push("");
-        return updatedArray;
-      });
-      currentIndex++;
-
-      if (currentIndex > 2) {
-        setTextResponse((prev) => {
-          let updatedArray = [...prev];
-          updatedArray.shift();
-          return updatedArray;
-        });
-      }
-
       // Read the stream
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
+      setTextResponse((prev) => [...prev, ""]);
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value);
+        console.log(chunk)
         buffer += chunk;
 
         // Split the buffer into events
         const events = buffer.split("\n\n");
         buffer = events.pop(); // Keep the last incomplete event in the buffer
-
         // Process each complete event
         for (const event of events) {
           const [header, data] = event.split("\n");
