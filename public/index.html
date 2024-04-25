@@ -13,14 +13,16 @@
         api_server: document.getElementById('api_server').value,
         prompt: document.getElementById('prompt').value
     }, function(chunk) {
-        document.getElementById('response').innerText += chunk;
+        if (chunk === ' ') {
+            chunk = '&nbsp;';
+        }
+        document.getElementById('response').innerHTML += chunk;
     })">Generate Text</button>
-    <button onclick='abort()'>Abort</button>
     <p id="response"></p>
     <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
     <button onclick='text2speech()'>Text to Speech</button>
     
-    
+
     <script type='module'>
         import {
             text_generate,
