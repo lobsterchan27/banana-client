@@ -17,6 +17,8 @@ app.use('/kobold', require('./src/kobold').router);
 
 app.use('/banana', require('./src/banana').router);
 
+app.use('/chat', require('./src/chat').router);
+
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
