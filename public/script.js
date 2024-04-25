@@ -1,16 +1,24 @@
 let controller;
+let chatHistory = [];
 
-async function text_generate() {
-    console.log('text_generate called');
-    const api_server = document.getElementById('api_server').value;
-    const prompt = document.getElementById('prompt').value;
+/**
+ * Generates text using the provided arguments.
+ * @param {Object} args - An object containing the arguments for text generation.
+ * @param {string} args.api_server - The API server to use for text generation.
+ * @param {string} args.prompt - The prompt to use for text generation.
+ * @param {string[]} args.images - The images to use for text generation.
+ * @param {Function} callback - The callback function to handle the messages.
+ */
+async function text_generate(args, callback) {
+    chatHistory.push({role: 'user', message: args.prompt});
+    // let fullPrompt = permanentPrompt + history.map(entry => entry.message).join('');
+
     let payload = {
-        'api_server': api_server,
-        'prompt': prompt,
+        ...args,
         'can_abort': true
     }
 
-    const controller = new AbortController();
+    controller = new AbortController();
 
     try {
         const response = await fetch('/kobold/generate', {
@@ -40,15 +48,14 @@ async function text_generate() {
             let boundary = accumulator.indexOf('\n\n');
             while (boundary !== -1) {
                 const message = accumulator.slice(0, boundary);
-                console.log(message);
-                document.getElementById('response').textContent += message + '\n\n';
+                callback(message);
                 accumulator = accumulator.slice(boundary + 2);
                 boundary = accumulator.indexOf('\n\n');
             }
         }
     } catch (error) {
         console.error('Error sending request:', error);
-        document.getElementById('response').textContent += 'Error: ' + error.message + '\n';
+        callback(`Error: ${error.message}`);
     }
 }
 
@@ -56,12 +63,18 @@ async function abort() {
     controller.abort();
 }
 
-async function text2speech() {
-    const prompt = document.getElementById('tts_prompt').value;
+/**
+ * Converts text to speech using the provided arguments.
+ * @param {Object} args - An object containing the arguments for text to speech.
+ * @param {string} args.prompt - The prompt to convert to speech.
+ * @param {string} args.voice - The voice to use for the speech.
+ */
+async function text2speech(args) {
+    const { voice = 'reference' } = args;
 
     let payload = {
-        'prompt': prompt,
-        'voice': 'reference'
+        ...args,
+        voice
     }
 
     try {
