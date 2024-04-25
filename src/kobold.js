@@ -105,7 +105,10 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     };
 
 
-    const streaming = true;
+    let streaming = true;
+    if (request.body.streaming !== undefined) {
+        streaming = request.body.streaming;
+    }
     try {
         const url = `${request.body.api_server}/extra/generate/stream`
         const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
