@@ -6,7 +6,7 @@ let chatHistory = [];
  * @param {Object} args - An object containing the arguments for text generation.
  * @param {string} args.api_server - The API server to use for text generation.
  * @param {string} args.prompt - The prompt to use for text generation.
- * @param {string[]} args.images - The images to use for text generation.
+ * @param {string[]} args.images - The filepath to images to use for text generation. Uses banana-client as working directory.
  * @param {Function} callback - The callback function to handle the messages.
  */
 async function text_generate(args, callback) {
@@ -38,6 +38,7 @@ async function text_generate(args, callback) {
         const decoder = new TextDecoder();
 
         let accumulator = '';
+        let fullMessage = '';
 
         while (true) {
             const { done, value } = await reader.read();
@@ -47,12 +48,15 @@ async function text_generate(args, callback) {
 
             let boundary = accumulator.indexOf('\n\n');
             while (boundary !== -1) {
-                const message = accumulator.slice(0, boundary);
+                const message = extractData(accumulator.slice(0, boundary));
                 callback(message);
                 accumulator = accumulator.slice(boundary + 2);
                 boundary = accumulator.indexOf('\n\n');
+                fullMessage += message;
             }
         }
+        chatHistory.push({role: 'assistant', message: fullMessage});
+        console.log('Full message:', fullMessage);
     } catch (error) {
         console.error('Error sending request:', error);
         callback(`Error: ${error.message}`);
@@ -94,6 +98,21 @@ async function text2speech(args) {
     } catch (error) {
         console.error('Error sending request:', error);
         document.getElementById('response').textContent += 'Error: ' + error.message + '\n';
+    }
+}
+
+function extractData(chunk) {
+    const match = chunk.match(/data: (.*)/);
+    if (match) {
+        try {
+            const data = JSON.parse(match[1]);
+            return data.token;
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+            return null;
+        }
+    } else {
+        return null;
     }
 }
 
