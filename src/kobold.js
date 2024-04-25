@@ -104,6 +104,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         signal: controller.signal,
     };
 
+
     let streaming = true;
     if (request.body.streaming !== undefined) {
         streaming = request.body.streaming;
