@@ -2,8 +2,20 @@ const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
 const jsonParser = express.json();
+const fs = require('fs').promises;
+
 
 const router = express.Router();
+
+async function convertImagesToBase64(imagePaths) {
+    if (Array.isArray(imagePaths)) {
+        return await Promise.all(imagePaths.map(async (filePath) => {
+            let fileData = await fs.readFile(filePath);
+            return fileData.toString('base64');
+        }));
+    }
+    return [];
+}
 
 /**
  * Pipe a fetch() response to an Express.js Response, including status code.
@@ -78,7 +90,13 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         "max_length": 200,
         ...request.body,
     };
-    console.log('Request:', payload);
+
+    payload.images = await convertImagesToBase64(request.body.images);
+
+    console.log('Request:', {
+        ...payload,
+        images: payload.images.map(image => `${image.substring(0, 50)}... (length: ${image.length})`),
+    });
 
     const args = {
         body: JSON.stringify(payload),
@@ -86,11 +104,11 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         signal: controller.signal,
     };
 
-    const url = `${request.body.api_server}/extra/generate/stream`
-    const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
 
     const streaming = true;
     try {
+        const url = `${request.body.api_server}/extra/generate/stream`
+        const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
         if (streaming) {
             // Pipe remote SSE stream to Express response
             forwardFetchResponse(response, response_generate);
