@@ -111,6 +111,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     }
     try {
         const url = `${request.body.api_server}/extra/generate/stream`
+        console.log(url)
         const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
         if (streaming) {
             // Pipe remote SSE stream to Express response

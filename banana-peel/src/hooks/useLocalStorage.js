@@ -3,11 +3,16 @@ import { useState, useEffect } from 'react';
 function useLocalStorage(key, initialState) {
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : initialState;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return isNaN(parsed) ? parsed : Number(parsed);
+    }
+    return initialState;
   });
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(state));
+    const toSave = typeof state === 'number' ? state : JSON.stringify(state);
+    localStorage.setItem(key, toSave);
   }, [state, key]);
 
   return [state, setState];
