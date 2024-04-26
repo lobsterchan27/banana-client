@@ -1,4 +1,5 @@
 let controller;
+let permanentPrompt = ''
 let chatHistory = [];
 
 /**
@@ -11,10 +12,11 @@ let chatHistory = [];
  */
 async function text_generate(args, callback) {
     chatHistory.push({role: 'user', message: args.prompt});
-    // let fullPrompt = permanentPrompt + history.map(entry => entry.message).join('');
+    let fullPrompt = permanentPrompt + chatHistory.map(entry => entry.message).join('');
 
     let payload = {
         ...args,
+        'prompt': fullPrompt,
         'can_abort': true
     }
 
