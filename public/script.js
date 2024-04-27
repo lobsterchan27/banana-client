@@ -12,9 +12,9 @@ let chatHistory = [];
  */
 async function text_generate(args, callback) {
     chatHistory.push({role: 'user', message: args.prompt});
-    let fullPrompt = permanentPrompt + chatHistory.map(entry => entry.message).join('');
+    const fullPrompt = permanentPrompt + chatHistory.map(entry => entry.message).join('');
 
-    let payload = {
+    const payload = {
         ...args,
         'prompt': fullPrompt,
         'can_abort': true
@@ -78,7 +78,7 @@ async function abort() {
 async function text2speech(args) {
     const { voice = 'reference' } = args;
 
-    let payload = {
+    const payload = {
         ...args,
         voice
     }
