@@ -1,7 +1,7 @@
 const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
-const jsonParser = express.json();
+const { jsonParser } = require('./common');
 const fs = require('fs').promises;
 
 
