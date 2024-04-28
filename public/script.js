@@ -3,6 +3,65 @@ let permanentPrompt = ''
 let chatHistory = [];
 
 /**
+ * Transcribes a given URL.
+ *
+ * @param {Object} args - The arguments for the transcription.
+ * @param {string} args.api_server - The API server to use for the transcription.
+ * @param {string} args.url - The URL to transcribe.
+ * @param {string} [args.language=null] - The language to use for the transcription.
+ * @param {boolean} [args.text2speech=null] - Whether to convert the transcription to speech.
+ * @param {number} [args.segment_length=null] - The length of each segment in the transcription.
+ * @param {boolean} [args.translate=null] - Whether to translate the transcription.
+ * @param {boolean} [args.get_video=null] - Whether to get the video for the transcription.
+ * @param {number} [args.scene_threshold=null] - The scene threshold for the transcription.
+ * @param {number} [args.minimum_interval=null] - The minimum interval for the transcription.
+ * @param {number} [args.fixed_interval=null] - The fixed interval for the transcription.
+ *
+ * @returns {Promise<void>} A promise that resolves when the transcription is complete.
+ */
+//not completed finish tomorrow
+async function transcribe_url(args) {
+    console.log('Transcribing URL:', args);
+    const { 
+        api_server, 
+        url, 
+        language = null, 
+        text2speech = null, 
+        segment_length = null, 
+        translate = null, 
+        get_video = null,
+        scene_threshold = null,
+        minimum_interval = null,
+        fixed_interval = null
+    } = args;
+
+    const payload = {
+        api_server,
+        url,
+        language,
+        text2speech,
+        segment_length,
+        scene_threshold,
+        minimum_interval,
+        fixed_interval,
+        translate,
+        get_video
+    }
+
+    console.log('Payload:', payload);
+    try {
+        const response = await fetch('/banana/transcribe/url', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.error('Error sending request:', error);
+    }
+}
+/**
  * Generates text using the provided arguments.
  * @param {Object} args - An object containing the arguments for text generation.
  * @param {string} args.api_server - The API server to use for text generation.
@@ -118,7 +177,12 @@ function extractData(chunk) {
     }
 }
 
+async function processVideo() {
+
+}
+
 export {
+    transcribe_url,
     text_generate,
     text2speech,
     abort
