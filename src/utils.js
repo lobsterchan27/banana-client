@@ -1,4 +1,5 @@
 const fs = require('fs').promises;
+const { TextDecoder } = require('util');
 
 function createAbortController(request, response_generate) {
     const controller = new AbortController();
@@ -22,6 +23,27 @@ function createAbortController(request, response_generate) {
         controller.abort();
     });
     return controller;
+}
+
+function handleStream(response, expressResponse) {
+    const textDecoder = new TextDecoder();
+
+    response.body.on('data', (chunk) => {
+        const text = textDecoder.decode(chunk);
+        console.log(text);
+        // Add your processing logic here
+    });
+
+    // Handle the end of the stream
+    response.body.on('end', () => {
+        console.log('Stream ended');
+        expressResponse.end();
+    });
+
+    // Handle errors
+    response.body.on('error', (error) => {
+        console.error('Error occurred while reading from the stream:', error);
+    });
 }
 
 /**
@@ -104,11 +126,83 @@ async function loadJson(filename) {
     return JSON.parse(data);
 }
 
+//temp
+async function makeRequest(prompt, images, settings, controller) {
+    const payload = {
+        "prompt": prompt,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "max_length": 200,
+    };
+
+    if (images && images.length > 0) {
+        payload.images = await convertImagesToBase64(images);
+    }
+
+    const args = {
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+    };
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const url = `${settings.api_server}/extra/generate/stream`
+            const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
+            if (streaming) {
+                // Pipe remote SSE stream to Express response
+                forwardFetchResponse(response, response_generate);
+                return;
+            } else {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
+
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        const message = errorJson?.detail?.msg || errorText;
+                        return response_generate.status(400).send({ error: { message } });
+                    } catch {
+                        return response_generate.status(400).send({ error: { message: errorText } });
+                    }
+                }
+
+                const data = await response.json();
+                console.log('Endpoint response:', data);
+                return response_generate.send(data);
+            }
+        } catch (error) {
+            switch (error?.status) {
+                case 403:
+                case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
+                    console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
+                    await delay(delayAmount);
+                    break;
+                default:
+                    if ('status' in error) {
+                        console.log('Status Code from Kobold:', error.status);
+                    }
+                    return response_generate.send({ error: true });
+            }
+        }
+    }
+}
+
+/**
+ * Delays the current async function by the given amount of milliseconds.
+ * @param {number} ms Milliseconds to wait
+ * @returns {Promise<void>} Promise that resolves after the given amount of milliseconds
+ */
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
+    handleStream,
     createAbortController,
     forwardFetchResponse,
     fetchTTS,
     convertImagesToBase64,
     checkRequestBody,
-    loadJson
+    loadJson,
+    delay,
 };
