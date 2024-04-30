@@ -1,5 +1,29 @@
 const fs = require('fs').promises;
 
+function createAbortController(request, response_generate) {
+    const controller = new AbortController();
+    request.socket.removeAllListeners('close');
+    request.socket.on('close', async function () {
+        if (request.body.can_abort && !response_generate.writableEnded) {
+            try {
+                console.log('Aborting Kobold generation...');
+                // send abort signal to koboldcpp
+                const abortResponse = await fetch(`${request.body.api_server}/extra/abort`, {
+                    method: 'POST',
+                });
+
+                if (!abortResponse.ok) {
+                    console.log('Error sending abort request to Kobold:', abortResponse.status);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        controller.abort();
+    });
+    return controller;
+}
+
 /**
  * Pipe a fetch() response to an Express.js Response, including status code.
  * @param {import('node-fetch').Response} from The Fetch API response to pipe from.
@@ -81,6 +105,7 @@ async function loadJson(filename) {
 }
 
 module.exports = {
+    createAbortController,
     forwardFetchResponse,
     fetchTTS,
     convertImagesToBase64,
