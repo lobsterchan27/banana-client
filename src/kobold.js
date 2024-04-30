@@ -2,65 +2,37 @@ const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
 const { jsonParser } = require('./common');
+const { forwardFetchResponse, convertImagesToBase64, checkRequestBody, loadJson } = require('./utils');
 const fs = require('fs').promises;
 
 
 const router = express.Router();
 
-async function convertImagesToBase64(imagePaths) {
-    if (Array.isArray(imagePaths)) {
-        return await Promise.all(imagePaths.map(async (filePath) => {
-            let fileData = await fs.readFile(filePath);
-            return fileData.toString('base64');
-        }));
-    }
-    return [];
+async function someFunction(key, text) {
+    // Your function logic here
+    console.log(`Key: ${key}, Text: ${text}`);
 }
 
 /**
- * Pipe a fetch() response to an Express.js Response, including status code.
- * @param {import('node-fetch').Response} from The Fetch API response to pipe from.
- * @param {import('express').Response} to The Express response to pipe to.
+ * Makes request with image and prompt context.
+ * the request body should contain the base folder name of the images and the json.
+ * @param {Object} request - The request object.
+ * @param {String} request.body.api_server - The API server to use for text generation.
+ * @param {String} request.body.filename - The base folder name of the images and the json.
  */
-function forwardFetchResponse(from, to) {
-    let statusCode = from.status;
-    let statusText = from.statusText;
-
-    if (!from.ok) {
-        console.log(`Streaming request failed with status ${statusCode} ${statusText}`);
+router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold context generation request:', request.body);
+    const fileName = request.body.filename;
+    const json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+    for (let key in json) {
+        const imagefile = json[key];
+        const concatenatedText = textArray.map(item => item.text).join(' ');
+        await someFunction(key, concatenatedText);
     }
+});
 
-    // Avoid sending 401 responses as they reset the client Basic auth.
-    // This can produce an interesting artifact as "400 Unauthorized", but it's not out of spec.
-    // https://www.rfc-editor.org/rfc/rfc9110.html#name-overview-of-status-codes
-    // "The reason phrases listed here are only recommendations -- they can be replaced by local
-    //  equivalents or left out altogether without affecting the protocol."
-    if (statusCode === 401) {
-        statusCode = 400;
-    }
-
-    to.statusCode = statusCode;
-    to.statusMessage = statusText;
-    from.body.pipe(to);
-
-    to.socket.on('close', function () {
-        if (from.body instanceof Readable) from.body.destroy(); // Close the remote stream
-        to.end(); // End the Express response
-    });
-
-    from.body.on('end', function () {
-        console.log('Streaming request finished');
-        to.end();
-    });
-}
-
-router.post('/generate', jsonParser, async function (request, response_generate) {
-    if (!request.body) return response_generate.sendStatus(400);
-
-    if (request.body.api_server.indexOf('localhost') != -1) {
-        request.body.api_server = request.body.api_server.replace('localhost', '127.0.0.1');
-    }
-
+router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold generation request:', request.body);
     const request_prompt = request.body.prompt;
     const controller = new AbortController();
     request.socket.removeAllListeners('close');
@@ -83,7 +55,7 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         controller.abort();
     });
 
-    let payload = {
+    const payload = {
         "prompt": request_prompt,
         "temperature": 0.5,
         "top_p": 0.9,
@@ -92,11 +64,6 @@ router.post('/generate', jsonParser, async function (request, response_generate)
     };
 
     payload.images = await convertImagesToBase64(request.body.images);
-
-    console.log('Request:', {
-        ...payload,
-        images: payload.images.map(image => `${image.substring(0, 50)}... (length: ${image.length})`),
-    });
 
     const args = {
         body: JSON.stringify(payload),
