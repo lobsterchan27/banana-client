@@ -22,6 +22,8 @@ const Form = ({ form, setForm, textResponse, setTextResponse }) => {
   };
 
   return (
+    <>
+    
     <form onSubmit={handleSubmit}>
         <label>
           Prompt:
@@ -429,12 +431,13 @@ const Form = ({ form, setForm, textResponse, setTextResponse }) => {
       </>
     )}
       </div>
-      <button onClick={() => setShowAdvanced(!showAdvanced)}>
-        {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-      </button>
       <button type="button" onClick={abort}>Abort</button>
       <button type="submit">Submit</button>
     </form>
+      <button onClick={() => setShowAdvanced(!showAdvanced)}>
+        {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
+      </button>
+    </>
   );
 };
 

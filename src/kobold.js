@@ -85,9 +85,9 @@ router.post('/generate', jsonParser, async function (request, response_generate)
 
     let payload = {
         "prompt": request_prompt,
-        "temperature": 0.5,
-        "top_p": 0.9,
-        "max_length": 200,
+        "temperature": request.body.temperature || 0.5,
+        "top_p": request.body.top_p || 0.9,
+        "max_length": request.body.max_length || 200,
         ...request.body,
     };
 

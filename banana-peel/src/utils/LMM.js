@@ -2,12 +2,12 @@ let controller = new AbortController();
 
 async function fetchLMM(form, setTextResponse, currentIndex) {
     try {
-      let payload = {
+      let data = {
         ...form,
         can_abort: true,
       };
 
-      payload = managePayload(payload);
+      let payload = managePayload(data);
 
       const response = await fetch("http://localhost:5000/kobold/generate", {
         method: "POST",
