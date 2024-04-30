@@ -8,17 +8,13 @@ const fs = require('fs').promises;
 
 const router = express.Router();
 
-async function someFunction(key, text) {
-    // Your function logic here
-    console.log(`Key: ${key}, Text: ${text}`);
-}
-
 /**
  * Makes request with image and prompt context.
  * the request body should contain the base folder name of the images and the json.
  * @param {Object} request - The request object.
- * @param {String} request.body.api_server - The API server to use for text generation.
  * @param {String} request.body.filename - The base folder name of the images and the json.
+ * @param {Object} request.body.settings - The settings to use for text generation.
+ * @param {String} request.body.settings.api_server - The API server to use for text generation.
  */
 router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response_generate) {
     console.log('Received Kobold context generation request:', request.body);
@@ -27,8 +23,22 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     for (let key in json) {
         const imagefile = json[key];
         const concatenatedText = textArray.map(item => item.text).join(' ');
-        await someFunction(key, concatenatedText);
+        await makeRequest(concatenatedText, [imagefile], request.body.settings, response_generate);
     }
+});
+
+/**
+ * Generates text from a prompt.
+ * @param {Object} request - The request object.
+ * @param {String} request.body.prompt - The prompt to use for text generation.
+ * @param {String[]} request.body.images - The filepath to images to use for text generation. Uses banana-client as working directory.
+ * @param {Object} request.body.settings - The settings to use for text generation.
+ * @param {String} request.body.settings.api_server - The API server to use for text generation.
+ */
+router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold generation request:', request.body);
+    const controller = createAbortController(request, response_generate);
+    await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
 });
 
 async function makeRequest(prompt, images, settings, controller) {
@@ -37,10 +47,11 @@ async function makeRequest(prompt, images, settings, controller) {
         "temperature": 0.5,
         "top_p": 0.9,
         "max_length": 200,
-        ...request.body,
     };
 
-    payload.images = await convertImagesToBase64(request.body.images);
+    if (images && images.length > 0) {
+        payload.images = await convertImagesToBase64(images);
+    }
 
     const args = {
         body: JSON.stringify(payload),
@@ -48,10 +59,6 @@ async function makeRequest(prompt, images, settings, controller) {
         signal: controller.signal,
     };
 
-    let streaming = true;
-    if (settings.streaming !== undefined) {
-        streaming = settings.streaming;
-    }
     try {
         const url = `${settings.api_server}/extra/generate/stream`
         const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
@@ -92,11 +99,5 @@ async function makeRequest(prompt, images, settings, controller) {
         }
     }
 }
-
-router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
-    console.log('Received Kobold generation request:', request.body);
-    const controller = createAbortController(request, response_generate);
-    await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
-});
 
 module.exports = { router };
