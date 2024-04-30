@@ -10,8 +10,10 @@
     <input type="text" id="api_server" placeholder="enter server api here" value="http://127.0.0.1:8080/api">
     <input type="text" id="prompt" placeholder="Enter your prompt here">
     <button onclick="text_generate({
-        api_server: document.getElementById('api_server').value,
-        prompt: document.getElementById('prompt').value
+        prompt: document.getElementById('prompt').value,
+        settings: {
+            api_server: document.getElementById('api_server').value
+        }
     }, function(chunk) {
         if (chunk === ' ') {
             chunk = '&nbsp;';

@@ -2,7 +2,15 @@ const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
 const { jsonParser } = require('./common');
-const { forwardFetchResponse, convertImagesToBase64, checkRequestBody, loadJson } = require('./utils');
+const { 
+    createAbortController,
+    delay,
+    forwardFetchResponse,
+    convertImagesToBase64,
+    checkRequestBody,
+    loadJson,
+    handleStream, 
+} = require('./utils');
 const fs = require('fs').promises;
 
 
@@ -38,8 +46,15 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
 router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
     console.log('Received Kobold generation request:', request.body);
     const controller = createAbortController(request, response_generate);
-    await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
+    try {
+        const response = await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
+        handleStream(response, response_generate);
+    } catch (error) {
+        console.error('Error occurred during request:', error);
+        response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+    }
 });
+
 
 async function makeRequest(prompt, images, settings, controller) {
     const payload = {
@@ -59,14 +74,12 @@ async function makeRequest(prompt, images, settings, controller) {
         signal: controller.signal,
     };
 
-    try {
-        const url = `${settings.api_server}/extra/generate/stream`
-        const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
-        if (streaming) {
-            // Pipe remote SSE stream to Express response
-            forwardFetchResponse(response, response_generate);
-            return;
-        } else {
+    const delayAmount = 2500;
+    const MAX_RETRIES = 3;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const url = `${settings.api_server}/extra/generate/stream`
+            const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
             if (!response.ok) {
                 const errorText = await response.text();
                 console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
@@ -74,30 +87,27 @@ async function makeRequest(prompt, images, settings, controller) {
                 try {
                     const errorJson = JSON.parse(errorText);
                     const message = errorJson?.detail?.msg || errorText;
-                    return response_generate.status(400).send({ error: { message } });
+                    throw { status: 400, error: { message } };
                 } catch {
-                    return response_generate.status(400).send({ error: { message: errorText } });
+                    throw { status: 400, error: { message: errorText } };
                 }
             }
-
-            const data = await response.json();
-            console.log('Endpoint response:', data);
-            return response_generate.send(data);
-        }
-    } catch (error) {
-        switch (error?.status) {
-            case 403:
-            case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
-                console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
-                await delay(delayAmount);
-                break;
-            default:
-                if ('status' in error) {
-                    console.log('Status Code from Kobold:', error.status);
-                }
-                return response_generate.send({ error: true });
+            return response;
+        } catch (error) {
+            switch (error?.status) {
+                case 403:
+                case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
+                    console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
+                    await delay(delayAmount)
+                    break;
+                default:
+                    console.error('Error sending request:', error);
+                    throw { status: 500, error: { message: error.message } };
+            }
         }
     }
+    console.log('Max retries exceeded. Giving up.');
+    throw { status: 500, error: { message: 'Max retries exceeded' } };
 }
 
 module.exports = { router };
