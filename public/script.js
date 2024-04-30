@@ -78,9 +78,10 @@ async function transcribe_url(args) {
 /**
  * Generates text using the provided arguments.
  * @param {Object} args - An object containing the arguments for text generation.
- * @param {string} args.api_server - The API server to use for text generation.
  * @param {string} args.prompt - The prompt to use for text generation.
  * @param {string[]} args.images - The filepath to images to use for text generation. Uses banana-client as working directory.
+ * @param {Object} args.settings - The settings to use for text generation.
+ * @param {string} args.settings.api_server - The API server to use for text generation.
  * @param {Function} callback - The callback function to handle the messages.
  */
 async function text_generate(args, callback) {

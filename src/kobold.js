@@ -31,32 +31,9 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     }
 });
 
-router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
-    console.log('Received Kobold generation request:', request.body);
-    const request_prompt = request.body.prompt;
-    const controller = new AbortController();
-    request.socket.removeAllListeners('close');
-    request.socket.on('close', async function () {
-        if (request.body.can_abort && !response_generate.writableEnded) {
-            try {
-                console.log('Aborting Kobold generation...');
-                // send abort signal to koboldcpp
-                const abortResponse = await fetch(`${request.body.api_server}/extra/abort`, {
-                    method: 'POST',
-                });
-
-                if (!abortResponse.ok) {
-                    console.log('Error sending abort request to Kobold:', abortResponse.status);
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        }
-        controller.abort();
-    });
-
+async function makeRequest(prompt, images, settings, controller) {
     const payload = {
-        "prompt": request_prompt,
+        "prompt": prompt,
         "temperature": 0.5,
         "top_p": 0.9,
         "max_length": 200,
@@ -71,14 +48,12 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
         signal: controller.signal,
     };
 
-
     let streaming = true;
-    if (request.body.streaming !== undefined) {
-        streaming = request.body.streaming;
+    if (settings.streaming !== undefined) {
+        streaming = settings.streaming;
     }
     try {
-        const url = `${request.body.api_server}/extra/generate/stream`
-        console.log(url)
+        const url = `${settings.api_server}/extra/generate/stream`
         const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
         if (streaming) {
             // Pipe remote SSE stream to Express response
@@ -116,6 +91,12 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
                 return response_generate.send({ error: true });
         }
     }
+}
+
+router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold generation request:', request.body);
+    const controller = createAbortController(request, response_generate);
+    await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
 });
 
 module.exports = { router };
