@@ -76,7 +76,7 @@ function handleStream(response) {
         response.body.on('end', () => {
             console.log('Stream ended');
             console.log('Accumulated data:', fullMessage);
-            resolve(accumulator);
+            resolve(fullMessage);
         });
 
         response.body.on('error', (error) => {
