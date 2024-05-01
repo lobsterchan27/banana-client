@@ -2,14 +2,14 @@ const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
 const { jsonParser } = require('./common');
-const { 
+const {
     createAbortController,
     delay,
     forwardFetchResponse,
     convertImagesToBase64,
     checkRequestBody,
     loadJson,
-    handleStream, 
+    handleStream,
 } = require('./utils');
 const fs = require('fs').promises;
 
@@ -28,10 +28,20 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     console.log('Received Kobold context generation request:', request.body);
     const fileName = request.body.filename;
     const json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+    const controller = createAbortController(request, response_generate);
     for (let key in json) {
-        const imagefile = json[key];
-        const concatenatedText = textArray.map(item => item.text).join(' ');
-        await makeRequest(concatenatedText, [imagefile], request.body.settings, response_generate);
+        const imagefile = json[key].filename;
+        const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
+        console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}`);
+
+        const imageLocation = `public/context/${fileName}/${imagefile}`;
+        try {
+            const response = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
+            await handleStream(response, response_generate);
+        } catch (error) {
+            console.error('Error occurred during request:', error);
+            response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+        }
     }
 });
 
@@ -42,13 +52,21 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
  * @param {String[]} request.body.images - The filepath to images to use for text generation. Uses banana-client as working directory.
  * @param {Object} request.body.settings - The settings to use for text generation.
  * @param {String} request.body.settings.api_server - The API server to use for text generation.
+ * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
  */
 router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
     console.log('Received Kobold generation request:', request.body);
     const controller = createAbortController(request, response_generate);
     try {
-        const response = await makeRequest(request.body.prompt, request.body.images, request.body.settings, response_generate, controller);
-        handleStream(response, response_generate);
+        const response = await makeRequest(request.body.prompt, request.body.images, request.body.settings, controller);
+        if (request.body.settings.streaming) {
+            forwardFetchResponse(response, response_generate);
+            return;
+        } else {
+            const data = await response.json();
+            response_generate.send(data);
+            return;
+        }
     } catch (error) {
         console.error('Error occurred during request:', error);
         response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
@@ -78,7 +96,7 @@ async function makeRequest(prompt, images, settings, controller) {
     const MAX_RETRIES = 3;
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
-            const url = `${settings.api_server}/extra/generate/stream`
+            const url = settings.streaming ? `${settings.api_server}/extra/generate/stream` : `${settings.api_server}/v1/generate`;
             const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
             if (!response.ok) {
                 const errorText = await response.text();

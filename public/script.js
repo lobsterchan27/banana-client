@@ -208,11 +208,10 @@ function extractData(chunk) {
  */
 async function processContext(args) {
     const payload = {
-        api_server: args.api_server,
-        filename: args.filename
+        ...args
     }
-
     console.log('Processing context:', args);
+
     try {
         const response = await fetch('kobold/generate/context', {
             method: 'POST',
