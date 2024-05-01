@@ -1,6 +1,6 @@
 const express = require('express');
 const fetch = require('node-fetch').default;
-const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
 const { jsonParser } = require('./common');
@@ -52,12 +52,13 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
             const base_filename = fetchResponse.headers.get('Base-Filename');
             const saveFolder = path.join('public', 'context', base_filename);
 
-            busboy.on('file', function (fieldname, file, info) {
+            busboy.on('file', async function (fieldname, file, info) {
                 console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
-                
-                
-                if (!fs.existsSync(saveFolder)){
-                    fs.mkdirSync(saveFolder, { recursive: true });
+
+                try {
+                    await fs.promises.mkdir(saveFolder, { recursive: true });
+                } catch (error) {
+                    if (error.code !== 'EEXIST') throw error;
                 }
                 
                 const saveTo = path.join(saveFolder, info.filename);
