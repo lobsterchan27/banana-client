@@ -7,6 +7,7 @@
     background-color: #3e3e5c;
     gap: 2em;
     padding: 2em;
+    overflow: auto;
 }
 
 .textResponse {
