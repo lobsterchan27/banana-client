@@ -1,6 +1,12 @@
 const fs = require('fs').promises;
 const { TextDecoder } = require('util');
 
+/**
+ * Creates an AbortController for use with koboldcpp requests.
+ * @param {Request} request - node fetch request object for the generation request.
+ * @param {Response} response_generate - express.js response object for the generation request.
+ * @returns {AbortController} controller - The AbortController instance that can be used to signal abortion of a fetch request.
+ */
 function createAbortController(request, response_generate) {
     const controller = new AbortController();
     request.socket.removeAllListeners('close');
@@ -25,24 +31,58 @@ function createAbortController(request, response_generate) {
     return controller;
 }
 
-function handleStream(response, expressResponse) {
-    const textDecoder = new TextDecoder();
+/**
+ * Parses the data from the chunk of text.
+ * @param {string} chunk - The chunk of text to extract the data from.
+ * @returns {string} The extracted data.
+ */
+function extractData(chunk) {
+    const match = chunk.match(/data: (.*)/);
+    if (match) {
+        try {
+            const data = JSON.parse(match[1]);
+            return data.token;
+        } catch (error) {
+            console.error('Error parsing JSON:', error);
+            return null;
+        }
+    } else {
+        return null;
+    }
+}
 
-    response.body.on('data', (chunk) => {
-        const text = textDecoder.decode(chunk);
-        console.log(text);
-        // Add your processing logic here
-    });
+/**
+ * 
+ * @param {import('node-fetch').Response} response Streaming response from the server.
+ */
+function handleStream(response) {
+    return new Promise((resolve, reject) => {
+        // const textDecoder = new TextDecoder();
+        let accumulator = '';
+        let fullMessage = '';
 
-    // Handle the end of the stream
-    response.body.on('end', () => {
-        console.log('Stream ended');
-        expressResponse.end();
-    });
+        response.body.on('data', (chunk) => {
+            let boundary
+            accumulator += chunk;
+            
+            while ((boundary = accumulator.indexOf('\n\n')) !== -1) {
+                const message = extractData(accumulator.slice(0, boundary));
+                console.log('Message:', message);
+                fullMessage += message;
+                accumulator = accumulator.slice(boundary + 2);
+            }
+        });
 
-    // Handle errors
-    response.body.on('error', (error) => {
-        console.error('Error occurred while reading from the stream:', error);
+        response.body.on('end', () => {
+            console.log('Stream ended');
+            console.log('Accumulated data:', fullMessage);
+            resolve(accumulator);
+        });
+
+        response.body.on('error', (error) => {
+            console.error('Error occurred while reading from the stream:', error);
+            reject(error);
+        });
     });
 }
 
@@ -126,67 +166,6 @@ async function loadJson(filename) {
     return JSON.parse(data);
 }
 
-//temp
-async function makeRequest(prompt, images, settings, controller) {
-    const payload = {
-        "prompt": prompt,
-        "temperature": 0.5,
-        "top_p": 0.9,
-        "max_length": 200,
-    };
-
-    if (images && images.length > 0) {
-        payload.images = await convertImagesToBase64(images);
-    }
-
-    const args = {
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-    };
-    for (let i = 0; i < MAX_RETRIES; i++) {
-        try {
-            const url = `${settings.api_server}/extra/generate/stream`
-            const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
-            if (streaming) {
-                // Pipe remote SSE stream to Express response
-                forwardFetchResponse(response, response_generate);
-                return;
-            } else {
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
-
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        const message = errorJson?.detail?.msg || errorText;
-                        return response_generate.status(400).send({ error: { message } });
-                    } catch {
-                        return response_generate.status(400).send({ error: { message: errorText } });
-                    }
-                }
-
-                const data = await response.json();
-                console.log('Endpoint response:', data);
-                return response_generate.send(data);
-            }
-        } catch (error) {
-            switch (error?.status) {
-                case 403:
-                case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
-                    console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
-                    await delay(delayAmount);
-                    break;
-                default:
-                    if ('status' in error) {
-                        console.log('Status Code from Kobold:', error.status);
-                    }
-                    return response_generate.send({ error: true });
-            }
-        }
-    }
-}
-
 /**
  * Delays the current async function by the given amount of milliseconds.
  * @param {number} ms Milliseconds to wait
@@ -197,8 +176,9 @@ function delay(ms) {
 }
 
 module.exports = {
-    handleStream,
     createAbortController,
+    extractData,
+    handleStream,
     forwardFetchResponse,
     fetchTTS,
     convertImagesToBase64,
