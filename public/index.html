@@ -31,8 +31,11 @@
         minimum_interval: 2})
         '>Transcribe URL</button>
     <button onclick='processContext({
-        api_server: "http://127.0.0.1:8080/api",
-        filename: "Am_I_really_Wasting_My_Talent_youtubeshorts_shorts_pizza_better"
+        settings: {
+            api_server: "http://127.0.0.1:8080/api",
+            streaming: true
+        },
+        filename: "Am_I_really_Wasting_My_Talent_youtubeshorts_shorts_pizza_better",
     })'>processContext</button>
 
     <script type='module'>
