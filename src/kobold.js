@@ -17,12 +17,14 @@ const fs = require('fs');
 const router = express.Router();
 
 /**
- * Makes request with image and prompt context.
- * the request body should contain the base folder name of the images and the json.
+ * Makes a request with image and prompt context.
+ * The request body should contain the base folder name of the images and the JSON.
  * @param {Object} request - The request object.
- * @param {String} request.body.filename - The base folder name of the images and the json.
+ * @param {String} request.body.filename - The base folder name of the images and the JSON.
  * @param {Object} request.body.settings - The settings to use for text generation.
  * @param {String} request.body.settings.api_server - The API server to use for text generation.
+ * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
+ * @returns {Object} The response object. If the request was successful message or error will be returned.
  */
 router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response_generate) {
     console.log('Received Kobold context generation request:', request.body);
@@ -30,6 +32,10 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     const json = await loadJson(`public/context/${fileName}/${fileName}.json`);
     const controller = createAbortController(request, response_generate);
     for (let key in json) {
+        if (json[key].hasOwnProperty('generatedResponse')) {
+            console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
+            continue;
+        }
         const imagefile = json[key].filename;
         const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
         console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}`);
@@ -37,15 +43,24 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         const imageLocation = `public/context/${fileName}/${imagefile}`;
         try {
             const response = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
-            const data = await handleStream(response, response_generate);
-            json[key].generatedResponse = data;
+            if (request.body.settings.streaming) {
+                const data = await handleStream(response, response_generate);
+                json[key].generatedResponse = data;
+            } else {
+                const fullResponse = await response.json();
+                const data = fullResponse.results[0].text;
+                console.log('Response:', data);
+                json[key].generatedResponse = data;
+            }
         } catch (error) {
             console.error('Error occurred during request:', error);
             response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+            return;
         }
     }
     await fs.promises.writeFile(`public/context/${fileName}/${fileName}.json`, JSON.stringify(json, null, 2));
-    response_generate.send('done');
+    console.log('Text generation completed successfully. Results saved to json.');
+    response_generate.json({ done: true, message: 'Text generation completed successfully. Results saved to json.' });
 });
 
 /**
@@ -76,7 +91,18 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
     }
 });
 
-
+/**
+ * This function makes a request to the KoboldAI server.
+ * 
+ * @param {string} prompt - The text prompt to send to the AI.
+ * @param {Array<string>} images - An array of image URLs to be converted to Base64 and sent with the request.
+ * @param {Object} settings - An object containing settings for the request, such as whether to use streaming and the API server URL.
+ * @param {AbortController} controller - An AbortController instance to control the request.
+ * 
+ * @returns {Promise<Response>} - Returns a Promise that resolves to the Response object from the fetch request.
+ * 
+ * @throws {Object} - Throws an object with status and error message if the request fails or if maximum retries are exceeded.
+ */
 async function makeRequest(prompt, images, settings, controller) {
     const payload = {
         "prompt": prompt,
