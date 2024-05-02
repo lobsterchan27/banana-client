@@ -11,7 +11,7 @@ const {
     loadJson,
     handleStream,
 } = require('./utils');
-const fs = require('fs').promises;
+const fs = require('fs');
 
 
 const router = express.Router();
@@ -37,12 +37,15 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         const imageLocation = `public/context/${fileName}/${imagefile}`;
         try {
             const response = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
-            await handleStream(response, response_generate);
+            const data = await handleStream(response, response_generate);
+            json[key].generatedResponse = data;
         } catch (error) {
             console.error('Error occurred during request:', error);
             response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
         }
     }
+    await fs.promises.writeFile(`public/context/${fileName}/${fileName}.json`, JSON.stringify(json, null, 2));
+    response_generate.send('done');
 });
 
 /**
