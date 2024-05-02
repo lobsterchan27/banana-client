@@ -1,4 +1,4 @@
-const fs = require('fs').promises;
+const fs = require('fs');
 const { TextDecoder } = require('util');
 
 /**
@@ -121,28 +121,38 @@ function forwardFetchResponse(from, to) {
     });
 }
 
-async function fetchTTS(url, payload) {
+async function requestTTS(prompt, voice, settings) {
+    const url = settings.api_server + '/text2speech';
+    const payload = {
+        prompt: prompt,
+        voice: voice,
+    };
+
     const fetchResponse = await fetch(url, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' }
     });
 
-    const data = await fetchResponse.buffer();
-    const filepath = path.join(__dirname, 'public/tts', `audio_${Date.now()}.wav`)
+    if (!fetchResponse.ok) {
+        const errorText = await fetchResponse.text();
+        console.log(`Kobold returned error: ${fetchResponse.status} ${fetchResponse.statusText} ${errorText}`);
 
-    fs.writeFile(filepath, data, (err) => {
-        if (err) throw err;
-        console.log('The file has been saved!');
-    });
-
-    return filepath;
+        try {
+            const errorJson = JSON.parse(errorText);
+            const message = errorJson?.detail?.msg || errorText;
+            throw { status: 400, error: { message } };
+        } catch {
+            throw { status: 400, error: { message: errorText } };
+        }
+    }
+    return fetchResponse;
 }
 
 async function convertImagesToBase64(imagePaths) {
     if (Array.isArray(imagePaths)) {
         return await Promise.all(imagePaths.map(async (filePath) => {
-            let fileData = await fs.readFile(filePath);
+            let fileData = await fs.promises.readFile(filePath);
             return fileData.toString('base64');
         }));
     }
@@ -160,7 +170,7 @@ function checkRequestBody(req, res, next) {
 }
 
 async function loadJson(filename) {
-    const data = await fs.readFile(filename, 'utf8');
+    const data = await fs.promises.readFile(filename, 'utf8');
     return JSON.parse(data);
 }
 
@@ -178,7 +188,7 @@ module.exports = {
     extractData,
     handleStream,
     forwardFetchResponse,
-    fetchTTS,
+    requestTTS,
     convertImagesToBase64,
     checkRequestBody,
     loadJson,
