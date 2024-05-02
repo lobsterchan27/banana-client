@@ -23,8 +23,14 @@
     document.getElementById('prompt').value ='';
     ">Generate Text</button>
     <p id="response"></p>
+    <input type="text" id="banana_api_server" placeholder="enter banana server api here" value="http://127.0.0.1:8127/api">
     <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
-    <button onclick='text2speech()'>Text to Speech</button>
+    <button onclick='text2speech({
+        prompt: document.getElementById("tts_prompt").value,
+        settings: {
+            api_server: document.getElementById("banana_api_server").value
+        }
+    })'>Text to Speech</button>
     <button onclick='transcribe_url({
         api_server: "http://127.0.0.1:8127/api",
         url: "https://www.youtube.com/shorts/4HnGbQ-vi8s",
@@ -33,7 +39,7 @@
     <button onclick='processContext({
         settings: {
             api_server: "http://127.0.0.1:8080/api",
-            streaming: true
+            streaming: false
         },
         filename: "Am_I_really_Wasting_My_Talent_youtubeshorts_shorts_pizza_better",
     })'>processContext</button>
