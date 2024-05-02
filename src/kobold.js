@@ -1,102 +1,90 @@
 const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
-const jsonParser = express.json();
+const { jsonParser } = require('./common');
+const {
+    createAbortController,
+    delay,
+    forwardFetchResponse,
+    convertImagesToBase64,
+    checkRequestBody,
+    loadJson,
+    handleStream,
+} = require('./utils');
 const fs = require('fs').promises;
 
 
 const router = express.Router();
 
-async function convertImagesToBase64(imagePaths) {
-    if (Array.isArray(imagePaths)) {
-        return await Promise.all(imagePaths.map(async (filePath) => {
-            let fileData = await fs.readFile(filePath);
-            return fileData.toString('base64');
-        }));
+/**
+ * Makes request with image and prompt context.
+ * the request body should contain the base folder name of the images and the json.
+ * @param {Object} request - The request object.
+ * @param {String} request.body.filename - The base folder name of the images and the json.
+ * @param {Object} request.body.settings - The settings to use for text generation.
+ * @param {String} request.body.settings.api_server - The API server to use for text generation.
+ */
+router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold context generation request:', request.body);
+    const fileName = request.body.filename;
+    const json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+    const controller = createAbortController(request, response_generate);
+    for (let key in json) {
+        const imagefile = json[key].filename;
+        const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
+        console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}`);
+
+        const imageLocation = `public/context/${fileName}/${imagefile}`;
+        try {
+            const response = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
+            await handleStream(response, response_generate);
+        } catch (error) {
+            console.error('Error occurred during request:', error);
+            response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+        }
     }
-    return [];
-}
+});
 
 /**
- * Pipe a fetch() response to an Express.js Response, including status code.
- * @param {import('node-fetch').Response} from The Fetch API response to pipe from.
- * @param {import('express').Response} to The Express response to pipe to.
+ * Generates text from a prompt.
+ * @param {Object} request - The request object.
+ * @param {String} request.body.prompt - The prompt to use for text generation.
+ * @param {String[]} request.body.images - The filepath to images to use for text generation. Uses banana-client as working directory.
+ * @param {Object} request.body.settings - The settings to use for text generation.
+ * @param {String} request.body.settings.api_server - The API server to use for text generation.
+ * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
  */
-function forwardFetchResponse(from, to) {
-    let statusCode = from.status;
-    let statusText = from.statusText;
-
-    if (!from.ok) {
-        console.log(`Streaming request failed with status ${statusCode} ${statusText}`);
-    }
-
-    // Avoid sending 401 responses as they reset the client Basic auth.
-    // This can produce an interesting artifact as "400 Unauthorized", but it's not out of spec.
-    // https://www.rfc-editor.org/rfc/rfc9110.html#name-overview-of-status-codes
-    // "The reason phrases listed here are only recommendations -- they can be replaced by local
-    //  equivalents or left out altogether without affecting the protocol."
-    if (statusCode === 401) {
-        statusCode = 400;
-    }
-
-    to.statusCode = statusCode;
-    to.statusMessage = statusText;
-    from.body.pipe(to);
-
-    to.socket.on('close', function () {
-        if (from.body instanceof Readable) from.body.destroy(); // Close the remote stream
-        to.end(); // End the Express response
-    });
-
-    from.body.on('end', function () {
-        console.log('Streaming request finished');
-        to.end();
-    });
-}
-
-router.post('/generate', jsonParser, async function (request, response_generate) {
-    if (!request.body) return response_generate.sendStatus(400);
-
-    if (request.body.api_server.indexOf('localhost') != -1) {
-        request.body.api_server = request.body.api_server.replace('localhost', '127.0.0.1');
-    }
-
-    const request_prompt = request.body.prompt;
-    const controller = new AbortController();
-    request.socket.removeAllListeners('close');
-    request.socket.on('close', async function () {
-        if (request.body.can_abort && !response_generate.writableEnded) {
-            try {
-                console.log('Aborting Kobold generation...');
-                // send abort signal to koboldcpp
-                const abortResponse = await fetch(`${request.body.api_server}/extra/abort`, {
-                    method: 'POST',
-                });
-
-                if (!abortResponse.ok) {
-                    console.log('Error sending abort request to Kobold:', abortResponse.status);
-                }
-            } catch (error) {
-                console.log(error);
-            }
+router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
+    console.log('Received Kobold generation request:', request.body);
+    const controller = createAbortController(request, response_generate);
+    try {
+        const response = await makeRequest(request.body.prompt, request.body.images, request.body.settings, controller);
+        if (request.body.settings.streaming) {
+            forwardFetchResponse(response, response_generate);
+            return;
+        } else {
+            const data = await response.json();
+            response_generate.send(data);
+            return;
         }
-        controller.abort();
-    });
+    } catch (error) {
+        console.error('Error occurred during request:', error);
+        response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+    }
+});
 
-    let payload = {
-        "prompt": request_prompt,
-        "temperature": request.body.temperature || 0.5,
-        "top_p": request.body.top_p || 0.9,
-        "max_length": request.body.max_length || 200,
-        ...request.body,
+
+async function makeRequest(prompt, images, settings, controller) {
+    const payload = {
+        "prompt": prompt,
+        "temperature": 0.5,
+        "top_p": 0.9,
+        "max_length": 200,
     };
 
-    payload.images = await convertImagesToBase64(request.body.images);
-
-    console.log('Request:', {
-        ...payload,
-        images: payload.images.map(image => `${image.substring(0, 50)}... (length: ${image.length})`),
-    });
+    if (images && images.length > 0) {
+        payload.images = await convertImagesToBase64(images);
+    }
 
     const args = {
         body: JSON.stringify(payload),
@@ -104,20 +92,12 @@ router.post('/generate', jsonParser, async function (request, response_generate)
         signal: controller.signal,
     };
 
-
-    let streaming = true;
-    if (request.body.streaming !== undefined) {
-        streaming = request.body.streaming;
-    }
-    try {
-        const url = `${request.body.api_server}/extra/generate/stream`
-        console.log(url)
-        const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
-        if (streaming) {
-            // Pipe remote SSE stream to Express response
-            forwardFetchResponse(response, response_generate);
-            return;
-        } else {
+    const delayAmount = 2500;
+    const MAX_RETRIES = 3;
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            const url = settings.streaming ? `${settings.api_server}/extra/generate/stream` : `${settings.api_server}/v1/generate`;
+            const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
             if (!response.ok) {
                 const errorText = await response.text();
                 console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
@@ -125,30 +105,27 @@ router.post('/generate', jsonParser, async function (request, response_generate)
                 try {
                     const errorJson = JSON.parse(errorText);
                     const message = errorJson?.detail?.msg || errorText;
-                    return response_generate.status(400).send({ error: { message } });
+                    throw { status: 400, error: { message } };
                 } catch {
-                    return response_generate.status(400).send({ error: { message: errorText } });
+                    throw { status: 400, error: { message: errorText } };
                 }
             }
-
-            const data = await response.json();
-            console.log('Endpoint response:', data);
-            return response_generate.send(data);
-        }
-    } catch (error) {
-        switch (error?.status) {
-            case 403:
-            case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
-                console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
-                await delay(delayAmount);
-                break;
-            default:
-                if ('status' in error) {
-                    console.log('Status Code from Kobold:', error.status);
-                }
-                return response_generate.send({ error: true });
+            return response;
+        } catch (error) {
+            switch (error?.status) {
+                case 403:
+                case 503: // retry in case of temporary service issue, possibly caused by a queue failure?
+                    console.debug(`KoboldAI is busy. Retry attempt ${i + 1} of ${MAX_RETRIES}...`);
+                    await delay(delayAmount)
+                    break;
+                default:
+                    console.error('Error sending request:', error);
+                    throw { status: 500, error: { message: error.message } };
+            }
         }
     }
-});
+    console.log('Max retries exceeded. Giving up.');
+    throw { status: 500, error: { message: 'Max retries exceeded' } };
+}
 
 module.exports = { router };

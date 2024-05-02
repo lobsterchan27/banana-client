@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>My Web Page</title>
+    <title>Banana Client</title>
 </head>
 
 <body>
@@ -10,8 +10,10 @@
     <input type="text" id="api_server" placeholder="enter server api here" value="http://127.0.0.1:8080/api">
     <input type="text" id="prompt" placeholder="Enter your prompt here">
     <button onclick="text_generate({
-        api_server: document.getElementById('api_server').value,
-        prompt: document.getElementById('prompt').value
+        prompt: document.getElementById('prompt').value,
+        settings: {
+            api_server: document.getElementById('api_server').value
+        }
     }, function(chunk) {
         if (chunk === ' ') {
             chunk = '&nbsp;';
@@ -23,18 +25,33 @@
     <p id="response"></p>
     <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
     <button onclick='text2speech()'>Text to Speech</button>
-
+    <button onclick='transcribe_url({
+        api_server: "http://127.0.0.1:8127/api",
+        url: "https://www.youtube.com/shorts/4HnGbQ-vi8s",
+        minimum_interval: 2})
+        '>Transcribe URL</button>
+    <button onclick='processContext({
+        settings: {
+            api_server: "http://127.0.0.1:8080/api",
+            streaming: true
+        },
+        filename: "Am_I_really_Wasting_My_Talent_youtubeshorts_shorts_pizza_better",
+    })'>processContext</button>
 
     <script type='module'>
         import {
+            transcribe_url,
             text_generate,
             text2speech,
-            abort
+            abort,
+            processContext
         } from './script.js';
 
+        window.transcribe_url = transcribe_url;
         window.text_generate = text_generate;
         window.text2speech = text2speech;
         window.abort = abort;
+        window.processContext = processContext;
     </script>
 </body>
 
