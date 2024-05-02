@@ -67,15 +67,13 @@ function handleStream(response) {
             
             while ((boundary = accumulator.indexOf('\n\n')) !== -1) {
                 const message = extractData(accumulator.slice(0, boundary));
-                console.log('Message:', message);
                 fullMessage += message;
                 accumulator = accumulator.slice(boundary + 2);
             }
         });
 
         response.body.on('end', () => {
-            console.log('Stream ended');
-            console.log('Accumulated data:', fullMessage);
+            console.log('Generated Response:', fullMessage + '\n');
             resolve(fullMessage);
         });
 
