@@ -151,14 +151,19 @@ async function abort() {
  * @param {Object} args - An object containing the arguments for text to speech.
  * @param {string} args.prompt - The prompt to convert to speech.
  * @param {string} args.voice - The voice to use for the speech.
+ * @param {Object} args.settings - The settings to use for text to speech.
+ * @param {string} args.settings.api_server - The API server to use for text to speech.
  */
 async function text2speech(args) {
-    const { voice = 'reference' } = args;
 
     const payload = {
-        ...args,
-        voice
+        prompt: args.prompt,
+        voice: args.voice,
+        settings: {
+            api_server: args.settings.api_server
+        }
     }
+    console.log('Text to speech:', payload);
 
     try {
         const response = await fetch('/banana/text2speech', {
@@ -173,10 +178,10 @@ async function text2speech(args) {
             throw new Error(`HTTP error ${response.status}`);
         }
 
-        document.getElementById('response').textContent += 'Transcription complete\n';
+        const data = await response.json();
+        console.log('Response:', data);
     } catch (error) {
         console.error('Error sending request:', error);
-        document.getElementById('response').textContent += 'Error: ' + error.message + '\n';
     }
 }
 
