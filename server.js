@@ -21,6 +21,8 @@ app.use('/chat', require('./src/chat').router);
 
 app.use('/audio', require('./src/audio').router);
 
+app.use('/files', require('./src/files').router);
+
 app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
