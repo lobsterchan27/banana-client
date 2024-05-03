@@ -1,78 +1,19 @@
-import { useState, useContext } from "react";
-import { FormContext } from "../contexts/FormContext";
-import useLocalStorage from "../hooks/useLocalStorage";
-import { fetchLMM, abort } from "../utils/LMM";
-import fetchStitch from "../utils/fetchStitch";
-import InputSlider from "./InputSlider";
-import TextAreaInput from "./TextAreaInput";
-import "./form.css";
+import React, { createContext } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
+import formConfig from "../formConfig";
 
-const Form = () => {
-  const { form, setForm } = useContext(FormContext);
-  const [textResponse, setTextResponse] = useLocalStorage('textResponse', []);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  let currentIndex = textResponse.length - 1;
+export const FormContext = createContext();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    fetchLMM(form, setTextResponse, currentIndex);
-    setForm({
-      ...form,
-    });
-  };
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
+export const FormProvider = ({ children }) => {
+  const [presets, setPresets] = useLocalStorage('preset', []);
+  const [form, setForm] = useLocalStorage('form', formConfig);
 
   return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <div className="sliderWrapper">
-
-      {Object.keys(form).map((key) => {
-        if (form[key].type === "string") {
-          return (
-            <label key={key}>
-              {key}:
-              <TextAreaInput 
-                name={key}
-                handleChange={handleChange}
-                handleSubmit={handleSubmit}
-              />
-            </label>
-          );
-        }
-        if (form[key].type === "float" || form[key].type === "integer") {
-          return (
-            <label key={key}>
-              <InputSlider 
-                name={key}
-              />
-            </label>
-          );
-        }
-        return null; // return null when there's no match
-      })}
-        </div>
-        <div className="formContainer">{showAdvanced && <></>}</div>
-        <button onClick={() => setShowAdvanced(!showAdvanced)}>
-          {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
-        </button>
-        <button type="button" onClick={abort}>
-          Abort
-        </button>
-        <button type="submit">Submit</button>
-      </form>
-      <button type="button" onClick={fetchStitch}>fetchStitch</button>
-    </>
+    <FormContext.Provider value={{ presets, setPresets, form, setForm }}>
+      {children}
+    </FormContext.Provider>
   );
 };
-
-export default Form;
 
 // {
 //   max_context_length:  integer minimum: 1 Maximum number of tokens to send to the model.,

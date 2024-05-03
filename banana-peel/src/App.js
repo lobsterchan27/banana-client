@@ -1,22 +1,16 @@
-import "./App.css";
+import { FormProvider } from './contexts/FormContext';
 import Form from "./components/Form";
-import useLocalStorage from "./hooks/useLocalStorage";
+import PresetComponent from './components/PresetComponent';
+import './App.css';
 
 function App() {
-  const [textResponse, setTextResponse] = useLocalStorage('textResponse', []);
-  const [form, setForm] = useLocalStorage(
-    "form",
-    {
-      prompt: "",
-    }
-  );
-
   return(
-    <div className="App">
-      <p></p>
-      <p className="textResponse">{textResponse[textResponse.length-1]}</p>
-      <Form form={form} setForm={setForm} textResponse={textResponse} setTextResponse={setTextResponse} />
-    </div>
+    <FormProvider>
+      <div className="App">
+        <PresetComponent />
+        <Form />
+      </div>
+    </FormProvider>
   );
 }
 

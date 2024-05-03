@@ -1,18 +1,8 @@
 .App {
     display: flex;
     flex-direction: column;
-    justify-content: end;
     align-items: center;
-    height: 100vh;
-    background-color: #3e3e5c;
-    gap: 2em;
-    padding: 2em;
-    overflow: auto;
-}
-
-.textResponse {
-    color: white;
-    font-size: 1.5em;
-    width:80%;
-    padding: 2em;
+    justify-content: end;
+    gap: 1em;
+    padding: 1em;
 }

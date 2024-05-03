@@ -1,5 +1,19 @@
+/* *{border:solid red 2px;}
+*:nth-child(1){border:solid 2px green;}
+*:nth-child(2){border:solid 2px blue;}
+*:nth-child(3){border:solid 2px orange;} */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+body{
+    background-color: #cccebb;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    height: 100vh;
 }

@@ -4,15 +4,13 @@ function useLocalStorage(key, initialState) {
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(key);
     if (saved) {
-      const parsed = JSON.parse(saved);
-      return isNaN(parsed) ? parsed : Number(parsed);
+      return JSON.parse(saved);
     }
     return initialState;
   });
 
   useEffect(() => {
-    const toSave = typeof state === 'number' ? state : JSON.stringify(state);
-    localStorage.setItem(key, toSave);
+    localStorage.setItem(key, JSON.stringify(state));
   }, [state, key]);
 
   return [state, setState];
