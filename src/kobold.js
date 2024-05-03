@@ -74,15 +74,26 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
  * @param {Object} request - The request object.
  * @param {String} request.body.prompt - The prompt to use for text generation.
  * @param {String[]} request.body.images - The filepath to images to use for text generation. Uses banana-client as working directory.
+ * @param {String[]} request.body.base64images - The base64 encoded images to use for text generation.
  * @param {Object} request.body.settings - The settings to use for text generation.
  * @param {String} request.body.settings.api_server - The API server to use for text generation.
  * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
  */
 router.post('/generate', jsonParser, checkRequestBody, async function (request, response) {
-    console.log('Received Kobold generation request:', request.body);
+    const { images: imagepaths, base64images, ...restOfBody } = request.body;
+    console.log('Received Kobold generation request:', {
+        ...restOfBody,
+        images: imagepaths ? '[Images]' : undefined,
+        base64images: base64images ? '[Base64 Images]' : undefined
+    });
+
     const controller = createAbortController(request, response);
+
+    const images = imagepaths ? convertImagesToBase64(imagepaths) : base64images;
+    console.log('Images:', images);
+
     try {
-        const fetchResponse = await makeRequest(request.body.prompt, request.body.images, request.body.settings, controller);
+        const fetchResponse = await makeRequest(request.body.prompt, images, request.body.settings, controller);
         if (request.body.settings.streaming) {
             forwardFetchResponse(fetchResponse, response);
             return;
@@ -117,8 +128,10 @@ async function makeRequest(prompt, images, settings, controller) {
     };
 
     if (images && images.length > 0) {
-        payload.images = await convertImagesToBase64(images);
+        payload.images = images;
     }
+
+    console.log('Sending request to KoboldAI:', payload);
 
     const args = {
         body: JSON.stringify(payload),

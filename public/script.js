@@ -1,6 +1,7 @@
 //global variables
 let permanentPrompt = ''
 let controller
+const selectedImages = []
 const contextFolders = []
 
 const chatHistory = [];
@@ -77,11 +78,12 @@ async function transcribe_url(args) {
         console.error('Error sending request:', error);
     }
 }
+
 /**
  * Generates text using the provided arguments.
  * @param {Object} args - An object containing the arguments for text generation.
  * @param {string} args.prompt - The prompt to use for text generation.
- * @param {string[]} args.images - The filepath to images to use for text generation. Uses banana-client as working directory.
+ * @param {String[]} args.base64images - The images to use for text generation.
  * @param {Object} args.settings - The settings to use for text generation.
  * @param {string} args.settings.api_server - The API server to use for text generation.
  * @param {Function} callback - The callback function to handle the messages.
@@ -94,6 +96,10 @@ async function text_generate(args, callback) {
         ...args,
         'prompt': fullPrompt,
         'can_abort': true
+    }
+
+    if (selectedImages.length > 0) {
+        payload.base64images = selectedImages;
     }
 
     controller = new AbortController();
@@ -138,6 +144,8 @@ async function text_generate(args, callback) {
     } catch (error) {
         console.error('Error sending request:', error);
         callback(`Error: ${error.message}`);
+    } finally {
+        selectedImages.length = 0;
     }
 }
 
@@ -345,4 +353,24 @@ document.getElementById('contextTTSButton').addEventListener('click', () => {
 
 document.querySelector('.dropdown-button').addEventListener('click', function() {
     document.querySelector('.dropdown-panel').classList.toggle('show');
+});
+
+//Image Input
+document.getElementById('uploadImage').addEventListener('click', function() {
+    document.getElementById('imageInput').click();
+});
+
+document.getElementById('imageInput').addEventListener('change', function() {
+    const files = this.files;
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const base64String = reader.result.replace('data:', '').replace(/^.+,/, '');
+                selectedImages.push(base64String);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
 });
