@@ -1,6 +1,8 @@
 //global variables
-let controller;
 let permanentPrompt = ''
+let controller
+const contextFolders = []
+
 const chatHistory = [];
 
 /**
@@ -209,7 +211,7 @@ function extractData(chunk) {
  * Processes the context.
  * @param {Object} args - An object containing the arguments for processing the context.
  * @param {string} args.api_server - The API server to use for processing the context.
- * @param {string} args.filename - The foldername returned from transcription. currently using context/{filename}
+ * @param {string} args.context - The foldername returned from transcription. currently using context/{filename}
  */
 async function processContext(args) {
     const payload = {
@@ -237,10 +239,110 @@ async function processContext(args) {
     }
 }
 
+async function contextTTS(args) {
+    const payload = {
+        ...args
+    }
+    console.log('Generating TTS from context:', args);
+    try {
+        const response = await fetch('banana/text2speech/context', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Response:', data);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+async function getFolders() {
+    try {
+        const response = await fetch('files/context-folders');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Response:', data);
+        contextFolders.length = 0;
+        contextFolders.push(...data);
+        populateDropdown();
+        return data;
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+function populateDropdown() {
+    const contextInput = document.getElementById('context_input');
+    // First, clear any existing options
+    contextInput.innerHTML = "";
+
+    contextFolders.forEach(function(item) {
+        const option = document.createElement('option');
+        option.value = item;
+        option.text = item;
+        contextInput.appendChild(option);
+    });
+}
+
 export {
     transcribe_url,
     text_generate,
     text2speech,
     abort,
-    processContext
+    processContext,
+    contextTTS,
+    getFolders,
 }
+
+window.onload = function() {
+    getFolders();
+};
+
+// Attach event handlers
+document.getElementById('generateTextButton').addEventListener('click', () => {
+    const api_server = document.getElementById('api_server').value;
+    const prompt = document.getElementById('prompt').value;
+    text_generate({ prompt, settings: { api_server } }, function(chunk) {
+        if (chunk === ' ') { chunk = '&nbsp;'; }
+        document.getElementById('response').innerHTML += chunk;
+    });
+    document.getElementById('prompt').value ='';
+});
+
+document.getElementById('text2speechButton').addEventListener('click', () => {
+    const api_server = document.getElementById('banana_api_server').value;
+    const prompt = document.getElementById('tts_prompt').value;
+    text2speech({ prompt, settings: { api_server } });
+});
+
+document.getElementById('transcribeUrlButton').addEventListener('click', () => {
+    const api_server = document.getElementById('banana_api_server').value;
+    const url = document.getElementById('transcribe_url').value;
+    transcribe_url({ api_server, url, minimum_interval: 2 });
+});
+
+document.getElementById('processContextButton').addEventListener('click', () => {
+    const api_server = document.getElementById('kobold_api_server').value;
+    const context = document.getElementById('context_input').value;
+    processContext({ settings: { api_server, streaming: false }, context });
+});
+
+document.getElementById('contextTTSButton').addEventListener('click', () => {
+    const api_server = document.getElementById('banana_api_server').value;
+    const context = document.getElementById('context_input').value;
+    contextTTS({ context, settings: { api_server } });
+});
+
+document.querySelector('.dropdown-button').addEventListener('click', function() {
+    document.querySelector('.dropdown-panel').classList.toggle('show');
+});
