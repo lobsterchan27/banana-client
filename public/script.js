@@ -271,7 +271,6 @@ async function getFolders() {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Response:', data);
         contextFolders.length = 0;
         contextFolders.push(...data);
         populateDropdown();
@@ -310,9 +309,9 @@ window.onload = function() {
 
 // Attach event handlers
 document.getElementById('generateTextButton').addEventListener('click', () => {
-    const api_server = document.getElementById('api_server').value;
+    const api_server = document.getElementById('kobold_api_server').value;
     const prompt = document.getElementById('prompt').value;
-    text_generate({ prompt, settings: { api_server } }, function(chunk) {
+    text_generate({ prompt, settings: { api_server, streaming: true } }, function(chunk) {
         if (chunk === ' ') { chunk = '&nbsp;'; }
         document.getElementById('response').innerHTML += chunk;
     });
@@ -333,7 +332,8 @@ document.getElementById('transcribeUrlButton').addEventListener('click', () => {
 
 document.getElementById('processContextButton').addEventListener('click', () => {
     const api_server = document.getElementById('kobold_api_server').value;
-    const context = document.getElementById('context_input').value;
+    const selectElement = document.getElementById('context_input');
+    const context = selectElement.options[selectElement.selectedIndex].text;
     processContext({ settings: { api_server, streaming: false }, context });
 });
 

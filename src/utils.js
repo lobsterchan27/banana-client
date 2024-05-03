@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { TextDecoder } = require('util');
+const { Readable } = require('stream');
 
 /**
  * Creates an AbortController for use with koboldcpp requests.
@@ -128,11 +128,16 @@ async function requestTTS(prompt, voice, settings) {
         voice: voice,
     };
 
-    const fetchResponse = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' }
-    });
+    try {
+        fetchResponse = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error(`Error during fetch: ${error.message}`);
+        throw { status: 500, error: { message: 'Server error' } };
+    }
 
     if (!fetchResponse.ok) {
         const errorText = await fetchResponse.text();

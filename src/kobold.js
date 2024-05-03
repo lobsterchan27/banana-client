@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
 const { jsonParser, checkRequestBody } = require('./common');
@@ -43,10 +44,9 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
             console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
             continue;
         }
-        const imagefile = json[key].fileName;
+        const imagefile = json[key].filename;
         const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
-        console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}`);
-
+        console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}\n`);
         const imageLocation = path.join('public', 'context', fileName, imagefile);
         try {
             const fetchResponse = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
@@ -61,8 +61,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
             }
         } catch (error) {
             console.error('Error occurred during request:', error);
-            response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
-            return;
+            return response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
         }
     }
     await fs.promises.writeFile(`public/context/${fileName}/${fileName}.json`, JSON.stringify(json, null, 2));
@@ -89,12 +88,11 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
             return;
         } else {
             const data = await fetchResponse.json();
-            response.send(data);
-            return;
+            return response.send(data);
         }
     } catch (error) {
         console.error('Error occurred during request:', error);
-        response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+        return response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
     }
 });
 

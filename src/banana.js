@@ -91,14 +91,14 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
                     response.json({ folderPath: base_filename });
                 } catch (error) {
                     console.error('Error:', error);
-                    response.status(500).send('An error occurred');
+                    return response.status(500).send('An error occurred');
                 }
             });
         }
     } catch (error) {
         console.error('Error:', error);
         const status = error.status || 500;
-        response.status(status).send(`An error occurred with status code: ${status}`);
+        return response.status(status).send(`An error occurred with status code: ${status}`);
     }
 });
 
@@ -128,11 +128,11 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
         await streamPipeline(fetchResponse.body, fs.createWriteStream(filePath));
 
         console.log('The file has been saved!');
-        response.status(200).json({ message: 'TTS Complete', filepath: filePath });
+        return response.status(200).json({ message: 'TTS Complete', filepath: filePath });
     } catch (error) {
         console.error('Error:', error);
         const status = error.status || 500;
-        response.status(status).send(`An error occurred with status code: ${status}`);
+        return response.status(status).send(`An error occurred with status code: ${status}`);
     }
 });
 
@@ -173,11 +173,11 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
         } catch (error) {
             console.error('Error:', error);
             const status = error.status || 500;
-            response.status(status).send(`An error occurred with status code: ${status}`);
+            return response.status(status).send(`An error occurred with status code: ${status}`);
         }
     }
     console.log('All files have been saved!');
-    response.status(200).json({ message: 'TTS Complete', filepath: fileName });
+    return response.status(200).json({ message: 'TTS Complete', filepath: fileName });
 });
 
 module.exports = { router };
