@@ -3,10 +3,10 @@ const fetch = require('node-fetch').default;
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
-const { jsonParser } = require('./common');
-const { requestTTS, checkRequestBody } = require('./utils');
+const { jsonParser, checkRequestBody } = require('./common');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
+const { requestTTS, loadJson } = require('./utils');
 const Busboy = require('busboy');
 
 const router = express.Router();
@@ -116,24 +116,19 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
     try {
         const fetchResponse = await requestTTS(request.body.prompt, request.body.voice, request.body.settings);
 
-        if (!request.body.voice) {
-            request.body.voice = request.headers['voice'] || 'reference';
-            console.log('Voice:', request.body.voice);
-        }
-        
         const saveFolder = path.join('public', 'tts');
         fs.mkdirSync(saveFolder, { recursive: true });
 
         if (!request.body.voice) {
             request.body.voice = 'reference';
         }
-        const filename = path.join(saveFolder, `${request.body.voice}_${Date.now()}.wav`);
+        const filePath = path.join(saveFolder, `${request.body.voice}_${Date.now()}.wav`);
 
         const streamPipeline = promisify(pipeline);
-        await streamPipeline(fetchResponse.body, fs.createWriteStream(filename));
+        await streamPipeline(fetchResponse.body, fs.createWriteStream(filePath));
 
         console.log('The file has been saved!');
-        response.status(200).json({ message: 'TTS Complete', filename: filename });
+        response.status(200).json({ message: 'TTS Complete', filepath: filePath });
     } catch (error) {
         console.error('Error:', error);
         const status = error.status || 500;
@@ -141,8 +136,48 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
     }
 });
 
-router.post('text2speech/context', jsonParser, async function (request, response) {
+/**
+ * This function handles POST requests to the '/text2speech/' endpoint.
+ * 
+ * @param {Object} request - The request object, expected to contain a body with 'api_server', 'prompt', and optionally 'voice'.
+ * @param {string} request.body.context - The foldername containing the JSON and other related context files.
+ * @param {string} request.body.voice - The voice to use for the speech.
+ * @param {Object} request.body.settings - The settings to use for text to speech.
+ * @param {string} request.body.settings.api_server - The API server to use for text to speech.
+ */
+router.post('/text2speech/context', jsonParser, async function (request, response) {
+    console.log('Received context TTS request:', request.body);
+    const fileName = request.body.context;
 
+    let json;
+    try {
+        json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+    } catch (err) {
+        console.error(`Failed to load JSON: ${err}`);
+        return response.status(500).json({ error: 'Failed to load JSON' });
+    }
+    for (let key in json) {
+        if (!json[key].hasOwnProperty('generatedResponse')) {
+            return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
+        }
+        try {
+            console.log(`Generating TTS for prompt #${key}:\n ${json[key].generatedResponse}`);
+            const fetchResponse = await requestTTS(json[key].generatedResponse, request.body.voice, request.body.settings)
+
+            const filePath = path.join('public', 'context', fileName, `${fileName}_${key}.wav`);
+
+            const streamPipeline = promisify(pipeline);
+            await streamPipeline(fetchResponse.body, fs.createWriteStream(filePath));
+
+            console.log('The file has been saved!\n');
+        } catch (error) {
+            console.error('Error:', error);
+            const status = error.status || 500;
+            response.status(status).send(`An error occurred with status code: ${status}`);
+        }
+    }
+    console.log('All files have been saved!');
+    response.status(200).json({ message: 'TTS Complete', filepath: fileName });
 });
 
 module.exports = { router };
