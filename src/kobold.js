@@ -1,13 +1,12 @@
 const express = require('express');
 const fetch = require('node-fetch').default;
 const { Readable } = require('stream');
-const { jsonParser } = require('./common');
+const { jsonParser, checkRequestBody } = require('./common');
 const {
     createAbortController,
     delay,
     forwardFetchResponse,
     convertImagesToBase64,
-    checkRequestBody,
     loadJson,
     handleStream,
 } = require('./utils');
@@ -20,47 +19,55 @@ const router = express.Router();
  * Makes a request with image and prompt context.
  * The request body should contain the base folder name of the images and the JSON.
  * @param {Object} request - The request object.
- * @param {String} request.body.filename - The base folder name of the images and the JSON.
+ * @param {String} request.body.context - The base folder name of the images and the JSON.
  * @param {Object} request.body.settings - The settings to use for text generation.
  * @param {String} request.body.settings.api_server - The API server to use for text generation.
  * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
  * @returns {Object} The response object. If the request was successful message or error will be returned.
  */
-router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response_generate) {
+router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response) {
     console.log('Received Kobold context generation request:', request.body);
-    const fileName = request.body.filename;
-    const json = await loadJson(`public/context/${fileName}/${fileName}.json`);
-    const controller = createAbortController(request, response_generate);
+    const fileName = request.body.context;
+
+    let json;
+    try {
+        json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+    } catch (err) {
+        console.error(`Failed to load JSON: ${err}`);
+        return response.status(500).json({ error: 'Failed to load JSON' });
+    }
+
+    const controller = createAbortController(request, response);
     for (let key in json) {
         if (json[key].hasOwnProperty('generatedResponse')) {
             console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
             continue;
         }
-        const imagefile = json[key].filename;
+        const imagefile = json[key].fileName;
         const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
         console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}`);
 
-        const imageLocation = `public/context/${fileName}/${imagefile}`;
+        const imageLocation = path.join('public', 'context', fileName, imagefile);
         try {
-            const response = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
+            const fetchResponse = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
             if (request.body.settings.streaming) {
-                const data = await handleStream(response, response_generate);
+                const data = await handleStream(fetchResponse, response);
                 json[key].generatedResponse = data;
             } else {
-                const fullResponse = await response.json();
+                const fullResponse = await fetchResponse.json();
                 const data = fullResponse.results[0].text;
                 console.log('Response:', data);
                 json[key].generatedResponse = data;
             }
         } catch (error) {
             console.error('Error occurred during request:', error);
-            response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+            response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
             return;
         }
     }
     await fs.promises.writeFile(`public/context/${fileName}/${fileName}.json`, JSON.stringify(json, null, 2));
     console.log('Text generation completed successfully. Results saved to json.');
-    response_generate.json({ done: true, message: 'Text generation completed successfully. Results saved to json.' });
+    response.json({ done: true, message: 'Text generation completed successfully. Results saved to json.' });
 });
 
 /**
@@ -72,22 +79,22 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
  * @param {String} request.body.settings.api_server - The API server to use for text generation.
  * @param {Boolean} request.body.settings.streaming - Whether to stream the response.
  */
-router.post('/generate', jsonParser, checkRequestBody, async function (request, response_generate) {
+router.post('/generate', jsonParser, checkRequestBody, async function (request, response) {
     console.log('Received Kobold generation request:', request.body);
-    const controller = createAbortController(request, response_generate);
+    const controller = createAbortController(request, response);
     try {
-        const response = await makeRequest(request.body.prompt, request.body.images, request.body.settings, controller);
+        const fetchResponse = await makeRequest(request.body.prompt, request.body.images, request.body.settings, controller);
         if (request.body.settings.streaming) {
-            forwardFetchResponse(response, response_generate);
+            forwardFetchResponse(fetchResponse, response);
             return;
         } else {
-            const data = await response.json();
-            response_generate.send(data);
+            const data = await fetchResponse.json();
+            response.send(data);
             return;
         }
     } catch (error) {
         console.error('Error occurred during request:', error);
-        response_generate.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
+        response.status(error.status || 500).send({ error: error.error || { message: 'An error occurred' } });
     }
 });
 
@@ -126,10 +133,10 @@ async function makeRequest(prompt, images, settings, controller) {
     for (let i = 0; i < MAX_RETRIES; i++) {
         try {
             const url = settings.streaming ? `${settings.api_server}/extra/generate/stream` : `${settings.api_server}/v1/generate`;
-            const response = await fetch(url, { method: 'POST', timeout: 0, ...args });
-            if (!response.ok) {
+            const fetchResponse = await fetch(url, { method: 'POST', timeout: 0, ...args });
+            if (!fetchResponse.ok) {
                 const errorText = await response.text();
-                console.log(`Kobold returned error: ${response.status} ${response.statusText} ${errorText}`);
+                console.log(`Kobold returned error: ${fetchResponse.status} ${fetchResponse.statusText} ${errorText}`);
 
                 try {
                     const errorJson = JSON.parse(errorText);
@@ -139,7 +146,7 @@ async function makeRequest(prompt, images, settings, controller) {
                     throw { status: 400, error: { message: errorText } };
                 }
             }
-            return response;
+            return fetchResponse;
         } catch (error) {
             switch (error?.status) {
                 case 403:
