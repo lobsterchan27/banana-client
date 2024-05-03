@@ -4,14 +4,14 @@ const { TextDecoder } = require('util');
 /**
  * Creates an AbortController for use with koboldcpp requests.
  * @param {Request} request - node fetch request object for the generation request.
- * @param {Response} response_generate - express.js response object for the generation request.
+ * @param {Response} response - express.js response object for the generation request.
  * @returns {AbortController} controller - The AbortController instance that can be used to signal abortion of a fetch request.
  */
-function createAbortController(request, response_generate) {
+function createAbortController(request, response) {
     const controller = new AbortController();
     request.socket.removeAllListeners('close');
     request.socket.on('close', async function () {
-        if (request.body.can_abort && !response_generate.writableEnded) {
+        if (request.body.can_abort && !response.writableEnded) {
             try {
                 console.log('Aborting Kobold generation...');
                 // send abort signal to koboldcpp
@@ -159,19 +159,20 @@ async function convertImagesToBase64(imagePaths) {
     return [];
 }
 
-function checkRequestBody(req, res, next) {
-    if (!req.body) return res.sendStatus(400);
-
-    if (req.body.api_server && req.body.api_server.indexOf('localhost') != -1) {
-        req.body.api_server = req.body.api_server.replace('localhost', '127.0.0.1');
-    }
-
-    next();
-}
-
+/**
+ * Asynchronously loads a JSON file.
+ * 
+ * This function checks if the file at the given path exists and is accessible,
+ * then reads the file content and parses it as JSON.
+ * 
+ * @param {string} filename - The path to the JSON file.
+ * @returns {Promise<Object>} A promise that resolves to the parsed JSON object.
+ * @throws {Error} If the file does not exist, is not accessible, or its content is not valid JSON.
+ */
 async function loadJson(filename) {
-    const data = await fs.promises.readFile(filename, 'utf8');
-    return JSON.parse(data);
+        await fs.promises.access(filename, fs.constants.F_OK);
+        const data = await fs.promises.readFile(filename, 'utf8');
+        return JSON.parse(data);
 }
 
 /**
@@ -183,6 +184,17 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Sanitizes a user-provided path by normalizing it and removing any path traversal characters.
+ * @param {string} originalPath The original path usually user-provided
+ * @returns {string} The sanitized path
+ */
+function sanitizePath(originalPath) {
+    const normalizedPath = path.normalize(originalPath);
+    const sanitizedPath = normalizedPath.replace(/^(\.\.[\/\\])+/, '');
+    return sanitizedPath;
+}
+
 module.exports = {
     createAbortController,
     extractData,
@@ -190,7 +202,7 @@ module.exports = {
     forwardFetchResponse,
     requestTTS,
     convertImagesToBase64,
-    checkRequestBody,
     loadJson,
     delay,
+    sanitizePath,
 };
