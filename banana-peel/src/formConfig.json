@@ -1,0 +1,168 @@
+{
+  "prompt": {
+    "value": "",
+    "description": "Prompt sent to the model.",
+    "type": "string"
+  },
+  "max_context_length": {
+    "value": 512,
+    "description": "Maximum number of tokens to send to the model.",
+    "min": 512,
+    "max": 8192,
+    "step": 64,
+    "type": "integer"
+  },
+  "max_length": {
+    "value": 250,
+    "description": "Number of tokens to generate.",
+    "min": 16,
+    "max": 2048,
+    "step": 16,
+    "type": "integer"
+  },
+  "rep_pen": {
+    "value": 1.10,
+    "description": "Base repetition penalty value.",
+    "min": 1,
+    "max": 3,
+    "step": 0.01,
+    "type": "float"
+  },
+  "rep_pen_range": {
+    "value": 600,
+    "description": "Repetition penalty range.",
+    "min": 0,
+    "max": 8192,
+    "step": 64,
+    "type": "integer"
+  },
+  "sampler_order": {
+    "description": "Sampler order to be used. If N is the length of this array, then N must be greater than or equal to 6 and the array must be a permutation of the first N non-negative integers.",
+    "minItems": 6,
+    "items": {
+      "type": "integer"
+    },
+    "type": "array"
+  },
+  "sampler_seed": {
+    "value": -1,
+    "description": "RNG seed to use for sampling. If not specified, the global RNG will be used.",
+    "maximum": 999999,
+    "min": -1,
+    "type": "integer"
+  },
+  "stop_sequence": {
+    "description": "An array of string sequences where the API will stop generating further tokens. The returned text WILL contain the stop sequence.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  },
+  "temperature": {
+    "value": 1.00,
+    "description": "Temperature value.",
+    "min": 0,
+    "max": 4,
+    "step": 0.02,
+    "type": "float"
+  },
+  "tfs": {
+    "value": 1,
+    "description": "Tail free sampling value.",
+    "maximum": 1,
+    "min": 0,
+    "step": 0.01,
+    "type": "float"
+  },
+  "top_a": {
+    "value": 0,
+    "description": "Top-a sampling value.",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "type": "float"
+  },
+  "top_k": {
+    "value": 0,
+    "description": "Top-k sampling value.",
+    "min": 0,
+    "max": 100, 
+    "step": 1,
+    "type": "integer"
+  },
+  "top_p": {
+    "value": 0.95,
+    "description": "Top-p sampling value.",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "type": "float"
+  },
+  "min_p": {
+    "value": 0,
+    "description": "Min-p sampling value.",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "type": "float"
+  },
+  "typical": {
+    "value": 1,
+    "description": "Typical sampling value.",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "type": "float"
+  },
+  "use_default_badwordsids": {
+    "description": "If true, prevents the EOS token from being generated (Ban EOS). For unbantokens, set this to false.",
+    "value": false,
+    "type": "boolean"
+  },
+  "mirostat": {
+    "value": 0,
+    "description": "KoboldCpp ONLY. Sets the mirostat mode, 0=disabled, 1=mirostat_v1, 2=mirostat_v2",
+    "min": 0,
+    "max": 2,
+    "step": 1,
+    "type": "integer"
+  },
+  "mirostat_tau": {
+    "value": 5,
+    "description": "KoboldCpp ONLY. Mirostat tau value.",
+    "min": 0,
+    "max": 20,
+    "step": 0.01,
+    "type": "float"
+  },
+  "mirostat_eta": {
+    "value": 0.1,
+    "description": "KoboldCpp ONLY. Mirostat eta value.",
+    "min": 0,
+    "max": 1,
+    "step": 0.01,
+    "type": "float"
+  },
+  "grammar": {
+    "value": "",
+    "description": "KoboldCpp ONLY. A string containing the GBNF grammar to use.",
+    "type": "string"
+  },
+  "grammar_retain_state": {
+    "description": "KoboldCpp ONLY. If true, retains the previous generation's grammar state, otherwise it is reset on new generation.",
+    "value": false,
+    "type": "boolean"
+  },
+  "memory": {
+    "value": "",
+    "description": "KoboldCpp ONLY. If set, forcefully appends this string to the beginning of any submitted prompt text. If resulting context exceeds the limit, forcefully overwrites text from the beginning of the main prompt until it can fit. Useful to guarantee full memory insertion even when you cannot determine exact token count.",
+    "type": "string"
+  },
+  "images": {
+    "description": "KoboldCpp ONLY. If set, takes an array of base64 encoded strings, each one representing an image to be processed.",
+    "items": {
+      "type": "string"
+    },
+    "type": "array"
+  }
+}

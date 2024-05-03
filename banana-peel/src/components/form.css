@@ -1,43 +1,8 @@
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-  overflow: auto;
+
+.sliderWrapper {
+    display: flex;
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
 }
-
-.formContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1em;
-  color: white;
-}
-
-.formContainer label {
-  display: flex;
-  flex-direction: column;
-  width: 10%;
-}
-
-
-.formContainer input {
-
-}
-
-  .formContainer small{
-    
-  }
-  
-  button {
-    padding: 10px 20px;
-    font-size: 18px;
-    color: white;
-    background-color: #007BFF;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  button:hover {
-    background-color: #0056b3;
-  }
