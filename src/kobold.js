@@ -90,10 +90,11 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
     const controller = createAbortController(request, response);
 
     const images = imagepaths ? convertImagesToBase64(imagepaths) : base64images;
-    console.log('Images:', images);
+
+    const prompt = request.body.prompt.replace(/\\n/g, '\n');
 
     try {
-        const fetchResponse = await makeRequest(request.body.prompt, images, request.body.settings, controller);
+        const fetchResponse = await makeRequest(prompt, images, request.body.settings, controller);
         if (request.body.settings.streaming) {
             forwardFetchResponse(fetchResponse, response);
             return;
@@ -130,8 +131,6 @@ async function makeRequest(prompt, images, settings, controller) {
     if (images && images.length > 0) {
         payload.images = images;
     }
-
-    console.log('Sending request to KoboldAI:', payload);
 
     const args = {
         body: JSON.stringify(payload),
