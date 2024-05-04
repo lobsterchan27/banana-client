@@ -6,41 +6,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banana Client</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="favicon.png">
 </head>
 
 <body>
-    <div class="three-column-layout">
-        <div class="sidebar">
-            <div class="dropdown">
-                <button class="dropdown-button">API Server</button>
-                <div class="dropdown-panel">
-                    <div class="input-group">
-                        <label for="kobold_api_server">Kobold Server API:</label>
-                        <input type="text" id="kobold_api_server" placeholder="Enter kobold server API here" value="http://127.0.0.1:8080/api">
-                    </div>
-                    <div class="input-group">
-                        <label for="banana_api_server">Banana Server API:</label>
-                        <input type="text" id="banana_api_server" placeholder="Enter banana server API here" value="http://127.0.0.1:8127/api">
-                    </div>
-                </div>
+    <div class="options-bar">
+        <button class="dropdown-button">API Servers</button>
+        <div class="dropdown-panel">
+            <div class="input-group">
+                <label for="kobold_api_server">Kobold Server API:</label>
+                <input type="text" id="kobold_api_server" placeholder="Enter kobold server API here"
+                    value="http://127.0.0.1:8080/api">
+            </div>
+
+            <div class="input-group">
+                <label for="banana_api_server">Banana Server API:</label>
+                <input type="text" id="banana_api_server" placeholder="Enter banana server API here"
+                    value="http://127.0.0.1:8127/api">
             </div>
         </div>
+        <button class="dropdown-button">Settings</button>
+        <div class="dropdown-panel">
+            <ul>
+                <li>Debug item 1</li>
+                <li>Debug item 2</li>
+                <li>Debug item 3</li>
+                <!-- Add more list items as needed -->
+            </ul>
+        </div>
+    </div>
+    <div class="three-column-layout">
+        <div class="sidebar"></div>
         <div class="main-container">
             <h1>Banana Client</h1>
 
-            <p id="response"></p>
+            <p id="chat_display"></p>
 
             <div class="input-group">
                 <input type="text" id="prompt" placeholder="Enter your prompt here">
-                <button id="generateTextButton">Generate Text</button>
-                <button id="uploadImage">Upload Image</button>
                 <input type="file" id="imageInput" style="display: none;" accept="image/*">
+                <div id="button-group">
+                    <button id="generateTextButton">Generate Text</button>
+                    <button id="uploadImage">Upload Image</button>
+                </div>
             </div>
 
             <div class="input-group">
                 <label for="tts_prompt">Text to Speech</label>
                 <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
-                
+
                 <button id="text2speechButton">Text to Speech</button>
             </div>
 
@@ -59,9 +73,7 @@
                 </div>
             </div>
         </div>
-        <div class="sidebar">
-
-        </div>
+        <div class="sidebar"></div>
     </div>
     <script type='module' src='script.js'></script>
 </body>

@@ -1,5 +1,5 @@
 html, body {
-    height: 100%;
+    min-height: 100%;
     margin: 0;
     padding: 0;
 }
@@ -32,10 +32,20 @@ h1 {
     flex: 3;
     max-width: 800px;
     margin: 0 auto;
-    background-color: #ffffff;
+    background-color: #FAF0E6; /* Light tan background color */
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#chat_display {
+    white-space: pre-wrap;
+    background-color: #ffffff; /* White background color */
+    padding: 10px;
+    border-radius: 3px;
+    height: 500px;
+    overflow-y: auto;
+    border: 1px solid #cccccc;
 }
 
 /* Input group styles */
@@ -57,15 +67,19 @@ h1 {
     box-sizing: border-box;
 }
 
-/* Button styles */
-.input-group button {
-    padding: 10px 20px;
+.input-group input:focus {
+    outline: none;
+}
+
+button {
+    width: 120px; /* Set a specific width */
+    height: 40px; /* Set a specific height */
     background-color: #4CAF50;
     color: #ffffff;
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    margin-right: 10px;
+    margin-right: 15px;
 }
 
 button:active {
@@ -74,35 +88,42 @@ button:active {
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: #7CCB7C; /* Slightly darker green on hover */
 }
 
 /* Dropdown styles */
-.dropdown {
-    position: relative;
-    display: inline-block;
-    background-color: rgba(255, 255, 255, 0.9);
+.options-bar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 200px; /* Adjust as needed */
+    height: 100%;
+    background-color: #333; /* Adjust as needed */
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex; /* Add this line */
+    flex-direction: column; /* Add this line */
+    gap: 10px; /* Add this line */
 }
 
 .dropdown-button {
-    position: relative;
-    padding: 10px 20px;
-    top: 200;
-    right: 200;
-    background-color: #4CAF50;
-    color: #ffffff;
+    width: 100%;
+    background-color: #4CAF50; /* Adjust as needed */
+    color: white; /* Adjust as needed */
     border: none;
-    border-radius: 3px;
     cursor: pointer;
+    box-sizing: border-box;
 }
 
 .dropdown-panel {
     display: none;
     position: absolute;
-    min-width: 200px;
-    z-index: 1;
     left: 100%;
     top: 0;
+    min-width: 200px; /* Adjust as needed */
+    background-color: #f9f9f9; /* Adjust as needed */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
 }
 
 .dropdown-panel a {
@@ -110,7 +131,6 @@ button:hover {
     padding: 12px 16px;
     text-decoration: none;
     display: block;
-    background-color: #ffffff;
 }
 
 .dropdown-panel.show {
@@ -129,7 +149,6 @@ button:hover {
 
 #processContextButton, #contextTTSButton {
     display: block;
-    margin-top: 10px; /* Adds some space above the buttons */
 }
 
 /* Other styles */
@@ -142,16 +161,3 @@ input[type="text"] {
     margin-bottom: 10px;
 }
 
-#response {
-    white-space: pre-wrap;
-    background-color: #f5f5f5;
-    padding: 10px;
-    border-radius: 3px;
-    min-height: 100px;
-}
-/*
-*{border:solid red 2px;}
-*:nth-child(1){border:solid 2px green;}
-*:nth-child(2){border:solid 2px blue;}
-*:nth-child(3){border:solid 2px orange;}
-*/

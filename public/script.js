@@ -321,7 +321,7 @@ document.getElementById('generateTextButton').addEventListener('click', () => {
     const prompt = document.getElementById('prompt').value;
     text_generate({ prompt, settings: { api_server, streaming: true } }, function(chunk) {
         if (chunk === ' ') { chunk = '&nbsp;'; }
-        document.getElementById('response').innerHTML += chunk;
+        document.getElementById('chat_display').innerHTML += chunk;
     });
     document.getElementById('prompt').value ='';
 });
@@ -351,8 +351,18 @@ document.getElementById('contextTTSButton').addEventListener('click', () => {
     contextTTS({ context, settings: { api_server } });
 });
 
-document.querySelector('.dropdown-button').addEventListener('click', function() {
-    document.querySelector('.dropdown-panel').classList.toggle('show');
+document.querySelectorAll('.dropdown-button').forEach(function(button) {
+    button.addEventListener('click', function() {
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown-panel.show').forEach(function(panel) {
+            if (panel !== this.nextElementSibling) {
+                panel.classList.remove('show');
+            }
+        }.bind(this));
+
+        // Toggle the clicked dropdown
+        this.nextElementSibling.classList.toggle('show');
+    });
 });
 
 //Image Input
