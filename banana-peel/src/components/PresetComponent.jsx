@@ -1,15 +1,17 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FormContext } from "../contexts/FormContext";
 import useLocalStorage from "../hooks/useLocalStorage";
-import formConfig from "../formConfig";
+import "./presetComponent.css";
+
 
 const PresetComponent = () => {
-  const { form, setForm, presets, setPresets } = useContext(FormContext);
+  const { form, setForm, presets, setPresets, defaultPreset } = useContext(FormContext);
   const [presetName, setPresetName] = useLocalStorage("presetName", "");
   const [selectedPreset, setSelectedPreset] = useLocalStorage(
     "selectedPreset",
     ""
   );
+  
   const [toggle, setToggle] = useState(false);
 
   useEffect(() => {
@@ -30,7 +32,8 @@ const PresetComponent = () => {
       ];
       setPresets(updatedPresets);
       setSelectedPreset(presetName.trim());
-      setPresetName(""); // Clear input after adding presets
+      setPresetName("");
+      setToggle(false);
     }
   };
 
@@ -38,7 +41,7 @@ const PresetComponent = () => {
     const updatedPresets = presets.filter((presets) => presets.id !== id);
     setPresets(updatedPresets);
     setSelectedPreset("");
-    setForm(formConfig);
+    setForm(defaultPreset);
   };
 
   const updatePreset = (id) => {
@@ -49,7 +52,7 @@ const PresetComponent = () => {
   };
 
   const loadPreset = (id) => {
-    if (!id) setForm(formConfig);
+    if (!id) setForm(defaultPreset);
     const presetToLoad = presets.find((presets) => presets.id === id);
     if (presetToLoad) {
       setForm(presetToLoad.value);
@@ -57,9 +60,9 @@ const PresetComponent = () => {
   };
 
   return (
-    <div>
+    <div className="presetWrapper">
       {toggle && (
-          <>
+          <div className="presetItem">
           <input
             type="text"
             value={presetName}
@@ -67,8 +70,10 @@ const PresetComponent = () => {
             placeholder="Enter presets name"
           />
           <button onClick={addPreset}>Add</button>
-        </>
+        </div>
       )}
+      <div className="presetItem">
+
       <button onClick={() => setToggle(!toggle)}>{toggle ? "x" : "+"}</button>
       <select
         value={selectedPreset}
@@ -83,11 +88,12 @@ const PresetComponent = () => {
             ))
           : null}
       </select>
+      </div>
       {selectedPreset !== "" && (
-        <>
+        <div className="presetItem">
           <button onClick={() => updatePreset(selectedPreset)}>Save</button>
           <button onClick={() => deletePreset(selectedPreset)}>Delete</button>
-        </>
+        </div>
       )}
     </div>
   );

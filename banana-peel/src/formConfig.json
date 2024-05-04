@@ -4,6 +4,24 @@
     "description": "Prompt sent to the model.",
     "type": "string"
   },
+  "api_servers": {
+    "value": [],
+    "description": "API server to use.",
+    "type": "array",
+    "items": {
+      "type": "string"
+    }
+  },
+  "tts_prompt": {
+    "value": "",
+    "description": "Text to speech prompt.",
+    "type": "string"
+  },
+  "transcribe_video_url": {
+    "value": "",
+    "description": "URL of the video to transcribe.",
+    "type": "string"
+  },
   "max_context_length": {
     "value": 512,
     "description": "Maximum number of tokens to send to the model.",
@@ -159,6 +177,7 @@
     "type": "string"
   },
   "images": {
+    "value": [],
     "description": "KoboldCpp ONLY. If set, takes an array of base64 encoded strings, each one representing an image to be processed.",
     "items": {
       "type": "string"

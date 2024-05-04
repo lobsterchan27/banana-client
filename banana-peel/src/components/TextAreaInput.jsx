@@ -1,43 +1,38 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef, useLayoutEffect } from 'react';
 import { FormContext } from '../contexts/FormContext';
+import './textAreaInput.css';
 
-const TextAreaInput = ({ name, handleChange }) => {
+const TextAreaInput = ({ name }) => {
     const { form, setForm } = useContext(FormContext);
+    const textAreaRef = useRef(null);
+    const value = form[name];
 
-//   useEffect(() => {
-//     const handleKeyDown = (e) => {
-//       if (e.key === 'Enter' && e.shiftKey) {
-//         e.preventDefault();
-//         setValue((prevValue) => prevValue + '\n');
-//       }
-//     };
+    const handleChange = (e) => {
+        setForm({
+            ...form,
+            [name]: e.target.value,
+        });
+    };
 
-//     const textArea = textAreaRef.current;
-//     textArea.addEventListener('keydown', handleKeyDown);
+    const handleInput = (e) => {
+        textAreaRef.current.style.height = "5px";
+        textAreaRef.current.style.height = (textAreaRef.current.scrollHeight)+"px";
+    };
 
-//     return () => {
-//       textArea.removeEventListener('keydown', handleKeyDown);
-//     };
-//   }, []);
+    useLayoutEffect(() => {
+        handleInput();
+    }, [form]);
 
-  return (
-    <textarea
-      value={form[name]['value']}
-      onChange={handleChange}
-      name={name}
-      style={{
-        minHeight: '100px',
-        resize: 'none',
-        overflowY: 'hidden',
-        lineHeight: '1.5',
-        padding: '8px',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        fontFamily: 'inherit',
-        fontSize: '16px',
-      }}
-    />
-  );
+    return (
+        <textarea
+            ref={textAreaRef}
+            className="textAreaInput"
+            value={value}
+            onChange={handleChange}
+            onInput={handleInput}
+            name={name}
+        />
+    );
 };
 
 export default TextAreaInput;

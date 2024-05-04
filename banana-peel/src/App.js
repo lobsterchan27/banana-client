@@ -1,14 +1,14 @@
 import { FormProvider } from './contexts/FormContext';
-import Form from "./components/Form";
-import PresetComponent from './components/PresetComponent';
+import PromptForm from "./components/PromptForm";
 import './App.css';
+import Sidebar from './components/Sidebar';
 
 function App() {
   return(
     <FormProvider>
+        <Sidebar />
       <div className="App">
-        <PresetComponent />
-        <Form />
+        <PromptForm />
       </div>
     </FormProvider>
   );

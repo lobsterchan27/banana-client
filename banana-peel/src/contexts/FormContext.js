@@ -5,11 +5,15 @@ import formConfig from "../formConfig";
 export const FormContext = createContext();
 
 export const FormProvider = ({ children }) => {
+  const defaultPreset = Object.keys(formConfig).reduce((acc, key) => {
+    acc[key] = formConfig[key].value;
+    return acc;
+  }, {});
   const [presets, setPresets] = useLocalStorage('preset', []);
-  const [form, setForm] = useLocalStorage('form', formConfig);
+  const [form, setForm] = useLocalStorage('form', defaultPreset);
 
   return (
-    <FormContext.Provider value={{ presets, setPresets, form, setForm }}>
+    <FormContext.Provider value={{ presets, setPresets, form, setForm, defaultPreset }}>
       {children}
     </FormContext.Provider>
   );

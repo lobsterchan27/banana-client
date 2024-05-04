@@ -1,0 +1,12 @@
+.presetWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1em;
+}
+
+.presetItem {
+    display: flex;
+    justify-content: center;
+    gap: .5em;
+}

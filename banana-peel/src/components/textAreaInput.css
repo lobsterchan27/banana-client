@@ -1,0 +1,5 @@
+.textAreaInput {
+    resize: none;
+    padding: .5em;
+    max-height: 40em;
+}
