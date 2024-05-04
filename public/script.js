@@ -6,6 +6,72 @@ const contextFolders = []
 
 const chatHistory = [];
 
+async function prepareImage(base64Image) {
+    const base64Bytes = base64Image.length * 0.75;
+    const compressionLimit = 2 * 1024 * 1024;
+    const maxSide = 1024;
+
+    return (await createThumbnail(base64Image, maxSide, maxSide, 'image/jpeg')).split(",")[1];
+}
+
+/**
+ * Creates a thumbnail from a data URL.
+ * @param {string} dataUrl The data URL encoded data of the image.
+ * @param {number|null} maxWidth The maximum width of the thumbnail.
+ * @param {number|null} maxHeight The maximum height of the thumbnail.
+ * @param {string} [type='image/jpeg'] The type of the thumbnail.
+ * @returns {Promise<string>} A promise that resolves to the thumbnail data URL.
+ */
+export function createThumbnail(dataUrl, maxWidth = null, maxHeight = null, type = 'image/jpeg') {
+    // Someone might pass in a base64 encoded string without the data URL prefix
+    if (!dataUrl.includes('data:')) {
+        dataUrl = `data:image/jpeg;base64,${dataUrl}`;
+    }
+
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = dataUrl;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Calculate the thumbnail dimensions while maintaining the aspect ratio
+            const aspectRatio = img.width / img.height;
+            let thumbnailWidth = maxWidth;
+            let thumbnailHeight = maxHeight;
+
+            if (maxWidth === null) {
+                thumbnailWidth = img.width;
+                maxWidth = img.width;
+            }
+
+            if (maxHeight === null) {
+                thumbnailHeight = img.height;
+                maxHeight = img.height;
+            }
+
+            if (img.width > img.height) {
+                thumbnailHeight = maxWidth / aspectRatio;
+            } else {
+                thumbnailWidth = maxHeight * aspectRatio;
+            }
+
+            // Set the canvas dimensions and draw the resized image
+            canvas.width = thumbnailWidth;
+            canvas.height = thumbnailHeight;
+            ctx.drawImage(img, 0, 0, thumbnailWidth, thumbnailHeight);
+
+            // Convert the canvas to a data URL and resolve the promise
+            const thumbnailDataUrl = canvas.toDataURL(type);
+            resolve(thumbnailDataUrl);
+        };
+
+        img.onerror = () => {
+            reject(new Error('Failed to load the image.'));
+        };
+    });
+}
+
 /**
  * Transcribes a given URL.
  *
@@ -370,15 +436,14 @@ document.getElementById('uploadImage').addEventListener('click', function() {
     document.getElementById('imageInput').click();
 });
 
-document.getElementById('imageInput').addEventListener('change', function() {
+document.getElementById('imageInput').addEventListener('change', async function() {
     const files = this.files;
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = function() {
-                const base64String = reader.result.replace('data:', '').replace(/^.+,/, '');
-                selectedImages.push(base64String);
+            reader.onloadend = async function() {
+                selectedImages.push(await prepareImage(reader.result));
             };
             reader.readAsDataURL(file);
         }
