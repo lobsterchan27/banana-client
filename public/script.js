@@ -3,6 +3,7 @@ let controller;
 
 let permanentPrompt = '';
 const chatHistory = [];
+const firstToken = '### Instruction:\n';
 const userToken = '\n\n### Instruction:\n';
 const assistantToken = '\n\n### Response:\n';
 
@@ -14,7 +15,9 @@ function getPrefix(role) {
 }
 
 function constructFullPrompt(chatHistory) {
-    let prompt = chatHistory.map(entry => {
+    let prompt = firstToken + permanentPrompt;
+
+    prompt += chatHistory.map(entry => {
         return getPrefix(entry.role) + entry.message;
     }).join('');
 
@@ -24,8 +27,8 @@ function constructFullPrompt(chatHistory) {
     return prompt;
 }
 
-async function prepareImage(base64Image) {
-    const base64Bytes = base64Image.length * 0.75;
+async function prepareImage(image) {
+    const base64Bytes = image.length * 0.75;
     const compressionLimit = 2 * 1024 * 1024;
     const maxSide = 1024;
 
