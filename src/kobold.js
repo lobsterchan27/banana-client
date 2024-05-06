@@ -133,7 +133,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     }
     await fs.promises.writeFile(`public/context/${fileName}/${fileName}.json`, JSON.stringify(json, null, 2));
     console.log('Text generation completed successfully. Results saved to json.');
-    response.json({ done: true, message: 'Text generation completed successfully. Results saved to json.' });
+    response.json({ done: true, message: 'Text generation completed successfully. Results saved to json.', json: `context/${fileName}/${fileName}.json` });
 });
 
 /**
