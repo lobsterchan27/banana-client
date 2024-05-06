@@ -201,6 +201,7 @@ async function makeRequest(prompt, images, settings, controller) {
         "tfs": settings.tfs,
         "rep_pen": settings.rep_pen,
         "rep_pen_range": settings.rep_pen_range,
+        "sampler_order": [6,0,1,3,4,2,5],
         "stop_sequence": settings.stop_sequence,
     };
 
