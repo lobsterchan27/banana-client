@@ -1,4 +1,5 @@
 const fs = require('fs');
+const sharp = require('sharp');
 const { Readable } = require('stream');
 
 /**
@@ -200,6 +201,37 @@ function sanitizePath(originalPath) {
     return sanitizedPath;
 }
 
+async function prepareImage(imagePath) {
+    const imageBuffer = await fs.promises.readFile(imagePath);
+    const maxSide = 1024;
+
+    return await createThumbnail(imageBuffer, maxSide, maxSide, 'image/jpeg');
+}
+
+/**
+ * Creates a thumbnail from an image Buffer.
+ * @param {Buffer} imageBuffer The Buffer of the image.
+ * @param {number|null} maxWidth The maximum width of the thumbnail.
+ * @param {number|null} maxHeight The maximum height of the thumbnail.
+ * @param {string} [type='image/jpeg'] The type of the thumbnail.
+ * @returns {Promise<string>} A promise that resolves to the thumbnail base64 data.
+ */
+async function createThumbnail(imageBuffer, maxWidth = null, maxHeight = null, type = 'image/jpeg') {
+    // Use sharp to resize the image
+    const resizedImageBuffer = await sharp(imageBuffer)
+        .resize(maxWidth, maxHeight, {
+            fit: 'inside',
+            withoutEnlargement: true
+        })
+        .toFormat(type.split('/')[1])
+        .toBuffer();
+
+    // Convert the Buffer back to a base64 string
+    const resizedBase64Image = resizedImageBuffer.toString('base64');
+
+    return resizedBase64Image;
+}
+
 module.exports = {
     createAbortController,
     extractData,
@@ -210,4 +242,5 @@ module.exports = {
     loadJson,
     delay,
     sanitizePath,
+    prepareImage,
 };
