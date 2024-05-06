@@ -13,21 +13,22 @@
     <div class="options-bar">
         <button class="dropdown-button">API Servers</button>
         <div class="dropdown-panel">
+            <h2 class="dropdown-header">API Servers</h2>
             <div class="input-group">
-                <label for="kobold_api_server">Kobold Server API:</label>
-                <input type="text" id="kobold_api_server" placeholder="Enter kobold server API here"
+                <label for="kobold-api-server">Kobold:</label>
+                <input type="text" id="kobold-api-server" placeholder="Enter kobold server API here"
                     value="http://127.0.0.1:8080/api">
             </div>
 
             <div class="input-group">
-                <label for="banana_api_server">Banana Server API:</label>
-                <input type="text" id="banana_api_server" placeholder="Enter banana server API here"
+                <label for="banana-api-server">Banana:</label>
+                <input type="text" id="banana-api-server" placeholder="Enter banana server API here"
                     value="http://127.0.0.1:8127/api">
             </div>
         </div>
         <button class="dropdown-button">Settings</button>
         <div class="dropdown-panel">
-            <h2 class="setting-header">Token Limits</h2>
+            <h2 class="dropdown-header">Token Limits</h2>
             <div class="grid-container">
                 <div class="slider-container">
                     <label for="response-tokens-slider">Response (tokens):</label>
@@ -41,7 +42,7 @@
                     <input type="number" id="context-tokens-input" placeholder="Enter value here">
                 </div>
             </div>
-            <h2 class="setting-header">Sampling</h2>
+            <h2 class="dropdown-header">Sampling</h2>
             <div class="grid-container">
 
                 <div class="slider-container">
@@ -115,7 +116,27 @@
         </div>
         <button class="dropdown-button">Prompt Settings</button>
         <div class="dropdown-panel">
-            <h2 class="setting-header">Prompt</h2>
+            <h2 class="dropdown-header">Prompt</h2>
+
+            <div class="input-group">
+                <label for="permanent-prompt">Permanent Prompt:</label>
+                <textarea id="permanent-prompt" wrap="soft" rows="4" placeholder="Enter your permanent prompt here"></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="user-input">User:</label>
+                <input type="text" id="user-input" placeholder="Enter user's name here">
+            </div>
+
+            <div class="input-group">
+                <label for="character-name-input">Character:</label>
+                <input type="text" id="character-name-input" placeholder="Enter AI's name here">
+            </div>
+
+            <div class="input-group">
+                <label for="stop-sequence-input">Character:</label>
+                <input type="text" id="stop-sequence-input" placeholder="Enter eos token here">
+            </div>
 
         </div>
     </div>
@@ -124,36 +145,37 @@
         <div class="main-container">
             <h1>Banana Client</h1>
 
-            <p id="chat_display"></p>
+            <p id="chat-display"></p>
 
             <div class="input-group">
-                <textarea id="prompt" wrap="hard" rows="1" placeholder="Enter your prompt here"></textarea>
-                <input type="file" id="imageInput" style="display: none;" accept="image/*">
+                <textarea id="prompt" wrap="soft" rows="2" placeholder="Enter your prompt here"></textarea>
+                <input type="file" id="image-input" style="display: none;" accept="image/*">
                 <div id="button-group">
-                    <button id="generateTextButton">Generate Text</button>
-                    <button id="uploadImage">Upload Image</button>
+                    <button id="generate-text-button">Generate Text</button>
+                    <button id="upload-image">Upload Image</button>
+                    <button id="clear-chat">Clear Chat</button>
                 </div>
             </div>
 
             <div class="input-group">
-                <label for="tts_prompt">Text to Speech</label>
-                <input type="text" id="tts_prompt" placeholder="Enter text to speech here">
+                <label for="tts-prompt">Text to Speech</label>
+                <input type="text" id="tts-prompt" placeholder="Enter text to speech here">
 
-                <button id="text2speechButton">Text to Speech</button>
+                <button id="text-2-speech-button">Text to Speech</button>
             </div>
 
             <div class="input-group">
-                <input type="text" id="transcribe_url" placeholder="Enter URL to transcribe"
+                <input type="text" id="transcribe-url" placeholder="Enter URL to transcribe"
                     value="https://www.youtube.com/shorts/4HnGbQ-vi8s">
 
-                <button id="transcribeUrlButton">Transcribe URL</button>
+                <button id="transcribe-url-button">Transcribe URL</button>
             </div>
 
             <div class="input-group">
-                <select id="context_input"></select>
+                <select id="context-input"></select>
                 <div id="button-group">
-                    <button id="processContextButton">processContext</button>
-                    <button id="contextTTSButton">contextTTS</button>
+                    <button id="process-context-button">processContext</button>
+                    <button id="context-tts-button">contextTTS</button>
                 </div>
             </div>
         </div>
