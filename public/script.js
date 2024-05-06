@@ -1,10 +1,28 @@
 //global variables
-let permanentPrompt = ''
-let controller
-const selectedImages = []
-const contextFolders = []
+let controller;
 
+let permanentPrompt = '';
 const chatHistory = [];
+const userToken = '\n\n### Instruction:\n';
+const assistantToken = '\n\n### Response:\n';
+
+const selectedImages = [];
+const contextFolders = [];
+
+function getPrefix(role) {
+    return role === 'user' ? userToken : assistantToken;
+}
+
+function constructFullPrompt(chatHistory) {
+    let prompt = chatHistory.map(entry => {
+        return getPrefix(entry.role) + entry.message;
+    }).join('');
+
+    // Append the assistant token at the end
+    prompt += assistantToken;
+
+    return prompt;
+}
 
 async function prepareImage(base64Image) {
     const base64Bytes = base64Image.length * 0.75;
@@ -22,7 +40,7 @@ async function prepareImage(base64Image) {
  * @param {string} [type='image/jpeg'] The type of the thumbnail.
  * @returns {Promise<string>} A promise that resolves to the thumbnail data URL.
  */
-export function createThumbnail(dataUrl, maxWidth = null, maxHeight = null, type = 'image/jpeg') {
+function createThumbnail(dataUrl, maxWidth = null, maxHeight = null, type = 'image/jpeg') {
     // Someone might pass in a base64 encoded string without the data URL prefix
     if (!dataUrl.includes('data:')) {
         dataUrl = `data:image/jpeg;base64,${dataUrl}`;
@@ -89,7 +107,6 @@ export function createThumbnail(dataUrl, maxWidth = null, maxHeight = null, type
  *
  * @returns {Promise<void>} A promise that resolves when the transcription is complete.
  */
-//not completed finish tomorrow
 async function transcribe_url(args) {
     console.log('Transcribing URL:', args);
     const {
@@ -156,7 +173,7 @@ async function transcribe_url(args) {
  */
 async function text_generate(args, callback) {
     chatHistory.push({ role: 'user', message: args.prompt });
-    const fullPrompt = permanentPrompt + chatHistory.map(entry => entry.message).join('');
+    const fullPrompt = constructFullPrompt(chatHistory);
 
     const payload = {
         ...args,
@@ -367,19 +384,48 @@ function populateDropdown() {
     });
 }
 
-export {
-    transcribe_url,
-    text_generate,
-    text2speech,
-    abort,
-    processContext,
-    contextTTS,
-    getFolders,
+function loadSliders() {
+    fetch('sliders.json')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(config => {
+            const slider = document.getElementById(config.id);
+            const inputId = slider.getAttribute('data-input-id');
+            const input = document.getElementById(inputId);
+            
+            slider.min = config.min;
+            slider.max = config.max;
+            slider.step = config.step;
+            slider.value = config.default;
+            input.value = config.default;
+
+            slider.oninput = () => input.value = slider.value;
+            input.oninput = () => slider.value = input.value;
+        });
+    })
+    .catch(error => console.error('Error loading the JSON file:', error));
 }
 
-window.onload = function() {
+function enableAutoResize(textareaId) {
+    const textarea = document.getElementById(textareaId);
+
+    function autoResize() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    }
+
+    textarea.addEventListener('input', autoResize, false);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // enableAutoResize('prompt');
+    loadSliders();
     getFolders();
-};
+});
+
+// window.onload = function() {
+//     getFolders();
+// };
 
 // Attach event handlers
 document.getElementById('generateTextButton').addEventListener('click', () => {
@@ -438,14 +484,22 @@ document.getElementById('uploadImage').addEventListener('click', function() {
 
 document.getElementById('imageInput').addEventListener('change', async function() {
     const files = this.files;
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async function() {
-                selectedImages.push(await prepareImage(reader.result));
-            };
-            reader.readAsDataURL(file);
-        }
+    if (files.length > 0) {
+        const file = files[0];
+        const reader = new FileReader();
+        reader.onloadend = async function() {
+            selectedImages.push(await prepareImage(reader.result));
+        };
+        reader.readAsDataURL(file);
     }
 });
+
+export {
+    transcribe_url,
+    text_generate,
+    text2speech,
+    abort,
+    processContext,
+    contextTTS,
+    getFolders,
+}

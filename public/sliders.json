@@ -1,0 +1,93 @@
+[
+    {
+        "id": "response-tokens-slider",
+        "default": 200,
+        "min": 16,
+        "max": 2048,
+        "step": 1
+    },
+    {
+        "id": "context-tokens-slider",
+        "default": 8192,
+        "min": 512,
+        "max": 8192,
+        "step": 1
+    },
+    {
+        "id": "temperature-slider",
+        "default": 1,
+        "min": 0,
+        "max": 5,
+        "step": 0.01
+    },
+    {
+        "id": "top-k-slider",
+        "default": 0,
+        "min": -1,
+        "max": 200,
+        "step": 1
+    },
+    {
+        "id": "top-p-slider",
+        "default": 1,
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+    },
+    {
+        "id": "typical-p-slider",
+        "default": 1,
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+    },
+    {
+        "id": "min-p-slider",
+        "default": 0.05,
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+    },
+    {
+        "id": "top-a-slider",
+        "default": 0,
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+    },
+    {
+        "id": "tfs-slider",
+        "default": 1,
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+    },
+    {
+        "id": "rep-pen-slider",
+        "default": 1.1,
+        "min": 1,
+        "max": 3,
+        "step": 0.01
+    },
+    {
+        "id": "rep-pen-range-slider",
+        "default": 2048,
+        "min": -1,
+        "max": 8192,
+        "step": 1
+    },
+    {
+        "id": "freq-pen-slider",
+        "default": 0,
+        "min": -2,
+        "max": 2,
+        "step": 0.01
+    },
+    {
+        "id": "presence-pen-slider",
+        "default": 0,
+        "min": -2,
+        "max": 2,
+        "step": 0.01
+    }
+]
