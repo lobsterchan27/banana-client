@@ -33,7 +33,7 @@ async function prepareImage(image) {
     const compressionLimit = 2 * 1024 * 1024;
     const maxSide = 1024;
 
-    return (await createThumbnail(base64Image, maxSide, maxSide, 'image/jpeg')).split(",")[1];
+    return (await createThumbnail(image, maxSide, maxSide, 'image/jpeg')).split(",")[1];
 }
 
 /**
