@@ -38,7 +38,7 @@ h1 {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-#chat_display {
+#chat-display {
     white-space: pre-wrap;
     background-color: #ffffff; /* White background color */
     padding: 10px;
@@ -48,14 +48,40 @@ h1 {
     border: 1px solid #cccccc;
 }
 
-#prompt {
+.chat-message {
+    margin-bottom: 10px;
+    padding: 5px;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.chat-message.user {
+    color: #333333;
+}
+
+.chat-message.ai {
+    color: #333333;
+}
+
+@keyframes ellipsis {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+.ellipsis {
+    animation: ellipsis 1s infinite;
+}
+
+textarea {
     resize: none;
     width: 100%;
     box-sizing: border-box;
     outline: none;
     margin-bottom: 10px;
     height: auto;
-    overflow: auto;
+    overflow: hidden;
 }
 
 /* Input group styles */
@@ -153,7 +179,7 @@ button:hover {
     display: block;
 }
 
-.setting-header {
+.dropdown-header {
     text-align: center;
     font-size: .9em;
     font-weight: bold;
@@ -165,7 +191,7 @@ button:hover {
     flex-wrap: wrap;
 }
 
-#context_input {
+#context-input {
     width: 100%; /* Adjust this to the size you want */
     display: block;
     margin-bottom: 10px; /* Adds some space below the dropdown */
@@ -175,7 +201,7 @@ button:hover {
     display: flex;
 }
 
-#processContextButton, #contextTTSButton {
+#process-context-button, #context-tts-button {
     display: block;
 }
 
