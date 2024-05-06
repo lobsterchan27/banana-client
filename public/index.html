@@ -27,81 +27,81 @@
             </div>
         </div>
         <button class="dropdown-button">Settings</button>
-        <div class="dropdown-panel">
+        <div id="slider-settings" class="dropdown-panel">
             <h2 class="dropdown-header">Token Limits</h2>
             <div class="grid-container">
                 <div class="slider-container">
-                    <label for="response-tokens-slider">Response (tokens):</label>
-                    <input type="range" id="response-tokens-slider" data-input-id="response-tokens-input">
-                    <input type="number" id="response-tokens-input" placeholder="Enter value here">
+                    <label for="max_length">Response (tokens):</label>
+                    <input type="range" id="max_length" data-input-id="max_length-input">
+                    <input type="number" id="max_length-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="context-tokens-slider">Context (tokens):</label>
-                    <input type="range" id="context-tokens-slider" data-input-id="context-tokens-input">
-                    <input type="number" id="context-tokens-input" placeholder="Enter value here">
+                    <label for="max_context_length">Context (tokens):</label>
+                    <input type="range" id="max_context_length" data-input-id="max_context_length-input">
+                    <input type="number" id="max_context_length-input" placeholder="Enter value here">
                 </div>
             </div>
             <h2 class="dropdown-header">Sampling</h2>
             <div class="grid-container">
 
                 <div class="slider-container">
-                    <label for="temperature-slider">Temperature:</label>
-                    <input type="range" id="temperature-slider" data-input-id="temperature-input">
+                    <label for="temperature">Temperature:</label>
+                    <input type="range" id="temperature" data-input-id="temperature-input">
                     <input type="number" id="temperature-input" placeholder="Enter value here">
                 </div>
 
 
                 <div class="slider-container">
-                    <label for="top-k-slider">Top K:</label>
-                    <input type="range" id="top-k-slider" data-input-id="top-k-input">
-                    <input type="number" id="top-k-input" placeholder="Enter value here">
+                    <label for="top_k">Top K:</label>
+                    <input type="range" id="top_k" data-input-id="top_k-input">
+                    <input type="number" id="top_k-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="top-p-slider">Top P:</label>
-                    <input type="range" id="top-p-slider" data-input-id="top-p-input">
-                    <input type="number" id="top-p-input" placeholder="Enter value here">
+                    <label for="top_p">Top P:</label>
+                    <input type="range" id="top_p" data-input-id="top_p-input">
+                    <input type="number" id="top_p-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="typical-p-slider">Typical P:</label>
-                    <input type="range" id="typical-p-slider" data-input-id="typical-p-input">
-                    <input type="number" id="typical-p-input" placeholder="Enter value here">
+                    <label for="typical">Typical P:</label>
+                    <input type="range" id="typical" data-input-id="typical-input">
+                    <input type="number" id="typical-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="min-p-slider">Min P:</label>
-                    <input type="range" id="min-p-slider" data-input-id="min-p-input">
-                    <input type="number" id="min-p-input" placeholder="Enter value here">
+                    <label for="min_p">Min P:</label>
+                    <input type="range" id="min_p" data-input-id="min_p-input">
+                    <input type="number" id="min_p-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="top-a-slider">Top A:</label>
-                    <input type="range" id="top-a-slider" data-input-id="top-a-input">
-                    <input type="number" id="top-a-input" placeholder="Enter value here">
+                    <label for="top_a">Top A:</label>
+                    <input type="range" id="top_a" data-input-id="top_a-input">
+                    <input type="number" id="top_a-input" placeholder="Enter value here">
                 </div>
 
 
                 <div class="slider-container">
-                    <label for="tfs-slider">TFS:</label>
-                    <input type="range" id="tfs-slider" data-input-id="tfs-input">
+                    <label for="tfs">TFS:</label>
+                    <input type="range" id="tfs" data-input-id="tfs-input">
                     <input type="number" id="tfs-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="rep-pen-slider">Repetition Penalty:</label>
-                    <input type="range" id="rep-pen-slider" data-input-id="rep-pen-input">
-                    <input type="number" id="rep-pen-input" placeholder="Enter value here">
+                    <label for="rep_pen">Repetition Penalty:</label>
+                    <input type="range" id="rep_pen" data-input-id="rep_pen-input">
+                    <input type="number" id="rep_pen-input" placeholder="Enter value here">
                 </div>
 
                 <div class="slider-container">
-                    <label for="rep-pen-range-slider">Repetition Penalty:</label>
-                    <input type="range" id="rep-pen-range-slider" data-input-id="rep-pen-range-input">
-                    <input type="number" id="rep-pen-range-input" placeholder="Enter value here">
+                    <label for="rep_pen_range">Repetition Penalty:</label>
+                    <input type="range" id="rep_pen_range" data-input-id="rep_pen_range-input">
+                    <input type="number" id="rep_pen_range-input" placeholder="Enter value here">
                 </div>
 
-                <div class="slider-container">
+                <!-- <div class="slider-container">
                     <label for="freq-pen-slider">Frequency Penalty:</label>
                     <input type="range" id="freq-pen-slider" data-input-id="freq-pen-input">
                     <input type="number" id="freq-pen-input" placeholder="Enter value here">
@@ -111,7 +111,7 @@
                     <label for="presence-pen-slider">Presence Penalty:</label>
                     <input type="range" id="presence-pen-slider" data-input-id="presence-pen-input">
                     <input type="number" id="presence-pen-input" placeholder="Enter value here">
-                </div>
+                </div> -->
             </div>
         </div>
         <button class="dropdown-button">Prompt Settings</button>

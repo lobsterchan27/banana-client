@@ -176,7 +176,7 @@ async function transcribeUrl(args) {
  * @param {Function} callback - The callback function to handle the messages.
  */
 async function textGenerate(args, callback) {
-    
+
     const payload = {
         ...args,
         'prompt': args.prompt,
@@ -491,6 +491,21 @@ function scrollToBottom() {
     chatDisplay.scrollTop = chatDisplay.scrollHeight;
 }
 
+function collectSliderSettings() {
+    const sliderSettingsDiv = document.getElementById('slider-settings');
+    const inputs = sliderSettingsDiv.querySelectorAll('input[type=range]');
+    const settings = {};
+
+    inputs.forEach(input => {
+        const value = parseFloat(input.value);
+        if (!isNaN(value)) {
+            settings[input.id] = value;
+        }
+    });
+
+    return settings;
+}
+
 //On page load
 document.addEventListener('DOMContentLoaded', function () {
     enableAutoResize('prompt');
@@ -531,9 +546,14 @@ document.getElementById('generate-text-button').addEventListener('click', () => 
     chatHistory.push({ role: 'user', message: promptInput });
     const prompt = constructFullPrompt(permanentPrompt, chatHistory, userName, characterName);
 
-    textGenerate({ prompt, settings: { api_server, stop_sequence, streaming: true } }, function (chunk) {
+    const settings = collectSliderSettings();
+    settings.api_server = api_server;
+    settings.stop_sequence = stop_sequence;
+    settings.streaming = true;
+
+    textGenerate({ prompt, settings }, function (chunk) {
         if (chunk === ' ') { chunk = '&nbsp;'; }
-    
+
         // Update AI's response
         if (aiMessage.querySelector('.ellipsis')) {
             aiMessage.innerHTML = `<strong>${characterName}:</strong> ${chunk}`;

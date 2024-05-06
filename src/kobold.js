@@ -190,9 +190,17 @@ router.post('/generate', jsonParser, checkRequestBody, async function (request, 
 async function makeRequest(prompt, images, settings, controller) {
     const payload = {
         "prompt": prompt,
-        "temperature": 0.5,
-        "top_p": 0.9,
-        "max_length": 200,
+        "max_length": settings.max_length,
+        "max_context_length": settings.max_context_length,
+        "temperature": settings.temperature,
+        "top_k": settings.top_k,
+        "top_p": settings.top_p,
+        "typical": settings.typical,
+        "min_p": settings.min_p,
+        "top_a": settings.top_a,
+        "tfs": settings.tfs,
+        "rep_pen": settings.rep_pen,
+        "rep_pen_range": settings.rep_pen_range,
         "stop_sequence": settings.stop_sequence,
     };
 
