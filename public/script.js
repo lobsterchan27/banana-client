@@ -1,7 +1,6 @@
 //global variables
 let controller;
 
-let permanentPrompt = '';
 const chatHistory = [];
 const firstToken = '### Instruction:\n';
 const userToken = '\n\n### Instruction:\n';
@@ -14,15 +13,17 @@ function getPrefix(role) {
     return role === 'user' ? userToken : assistantToken;
 }
 
-function constructFullPrompt(chatHistory) {
+function constructFullPrompt(permanentPrompt, chatHistory, userName, characterName) {
     let prompt = firstToken + permanentPrompt;
 
     prompt += chatHistory.map(entry => {
-        return getPrefix(entry.role) + entry.message;
+        // Use the user name for user entries and the character name for AI entries
+        const name = entry.role === 'user' ? userName : characterName;
+        return getPrefix(entry.role) + name + ":" + entry.message;
     }).join('');
 
     // Append the assistant token at the end
-    prompt += assistantToken;
+    prompt += assistantToken + characterName + ":";
 
     return prompt;
 }
@@ -110,7 +111,7 @@ function createThumbnail(dataUrl, maxWidth = null, maxHeight = null, type = 'ima
  *
  * @returns {Promise<void>} A promise that resolves when the transcription is complete.
  */
-async function transcribe_url(args) {
+async function transcribeUrl(args) {
     console.log('Transcribing URL:', args);
     const {
         api_server,
@@ -174,13 +175,11 @@ async function transcribe_url(args) {
  * @param {string} args.settings.api_server - The API server to use for text generation.
  * @param {Function} callback - The callback function to handle the messages.
  */
-async function text_generate(args, callback) {
-    chatHistory.push({ role: 'user', message: args.prompt });
-    const fullPrompt = constructFullPrompt(chatHistory);
-
+async function textGenerate(args, callback) {
+    
     const payload = {
         ...args,
-        'prompt': fullPrompt,
+        'prompt': args.prompt,
         'can_abort': true
     }
 
@@ -240,6 +239,17 @@ async function text_generate(args, callback) {
  */
 async function abort() {
     controller.abort();
+}
+
+function enableAutoResize(textareaId) {
+    const textarea = document.getElementById(textareaId);
+
+    function autoResize() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    }
+
+    textarea.addEventListener('input', autoResize, false);
 }
 
 /**
@@ -375,11 +385,11 @@ async function getFolders() {
 }
 
 function populateDropdown() {
-    const contextInput = document.getElementById('context_input');
+    const contextInput = document.getElementById('context-input');
     // First, clear any existing options
     contextInput.innerHTML = "";
 
-    contextFolders.forEach(function(item) {
+    contextFolders.forEach(function (item) {
         const option = document.createElement('option');
         option.value = item;
         option.text = item;
@@ -389,120 +399,172 @@ function populateDropdown() {
 
 function loadSliders() {
     fetch('sliders.json')
-    .then(response => response.json())
-    .then(data => {
-        data.forEach(config => {
-            const slider = document.getElementById(config.id);
-            const inputId = slider.getAttribute('data-input-id');
-            const input = document.getElementById(inputId);
-            
-            slider.min = config.min;
-            slider.max = config.max;
-            slider.step = config.step;
-            slider.value = config.default;
-            input.value = config.default;
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(config => {
+                const slider = document.getElementById(config.id);
+                const inputId = slider.getAttribute('data-input-id');
+                const input = document.getElementById(inputId);
 
-            slider.oninput = () => input.value = slider.value;
-            input.oninput = () => slider.value = input.value;
-        });
-    })
-    .catch(error => console.error('Error loading the JSON file:', error));
+                slider.min = config.min;
+                slider.max = config.max;
+                slider.step = config.step;
+                slider.value = config.default;
+                input.value = config.default;
+
+                slider.oninput = () => input.value = slider.value;
+                input.oninput = () => slider.value = input.value;
+            });
+        })
+        .catch(error => console.error('Error loading the JSON file:', error));
 }
 
-function enableAutoResize(textareaId) {
-    const textarea = document.getElementById(textareaId);
-
-    function autoResize() {
-        this.style.height = 'auto';
-        this.style.height = this.scrollHeight + 'px';
-    }
-
-    textarea.addEventListener('input', autoResize, false);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // enableAutoResize('prompt');
-    loadSliders();
-    getFolders();
-});
-
-// window.onload = function() {
-//     getFolders();
-// };
-
-// Attach event handlers
-document.getElementById('generateTextButton').addEventListener('click', () => {
-    const api_server = document.getElementById('kobold_api_server').value;
-    const prompt = document.getElementById('prompt').value;
-    text_generate({ prompt, settings: { api_server, streaming: true } }, function(chunk) {
-        if (chunk === ' ') { chunk = '&nbsp;'; }
-        document.getElementById('chat_display').innerHTML += chunk;
-    });
-    document.getElementById('prompt').value ='';
-});
-
-document.getElementById('text2speechButton').addEventListener('click', () => {
-    const api_server = document.getElementById('banana_api_server').value;
-    const prompt = document.getElementById('tts_prompt').value;
+// Event Handlers
+function handleTextToSpeechButtonClick() {
+    const api_server = document.getElementById('banana-api-server').value;
+    const prompt = document.getElementById('tts-prompt').value;
     text2speech({ prompt, settings: { api_server } });
-});
+}
 
-document.getElementById('transcribeUrlButton').addEventListener('click', () => {
-    const api_server = document.getElementById('banana_api_server').value;
-    const url = document.getElementById('transcribe_url').value;
-    transcribe_url({ api_server, url, minimum_interval: 2 });
-});
+function handleTranscribeUrlButtonClick() {
+    const api_server = document.getElementById('banana-api-server').value;
+    const url = document.getElementById('transcribe-url').value;
+    transcribeUrl({ api_server, url, minimum_interval: 2 });
+}
 
-document.getElementById('processContextButton').addEventListener('click', () => {
-    const api_server = document.getElementById('kobold_api_server').value;
-    const selectElement = document.getElementById('context_input');
+function handleProcessContextButtonClick() {
+    const api_server = document.getElementById('kobold-api-server').value;
+    const selectElement = document.getElementById('context-input');
     const context = selectElement.options[selectElement.selectedIndex].text;
     processContext({ settings: { api_server, streaming: false }, context });
-});
+}
 
-document.getElementById('contextTTSButton').addEventListener('click', () => {
-    const api_server = document.getElementById('banana_api_server').value;
-    const context = document.getElementById('context_input').value;
+function handleContextTTSButtonClick() {
+    const api_server = document.getElementById('banana-api-server').value;
+    const context = document.getElementById('context-input').value;
     contextTTS({ context, settings: { api_server } });
-});
+}
 
-document.querySelectorAll('.dropdown-button').forEach(function(button) {
-    button.addEventListener('click', function() {
-        // Close all other dropdowns
-        document.querySelectorAll('.dropdown-panel.show').forEach(function(panel) {
-            if (panel !== this.nextElementSibling) {
-                panel.classList.remove('show');
-            }
-        }.bind(this));
+function clearChat() {
+    document.getElementById('chat-display').innerHTML = '';
+    selectedImages.length = 0;
+    chatHistory.length = 0;
+}
 
-        // Toggle the clicked dropdown
-        this.nextElementSibling.classList.toggle('show');
-    });
-});
+function handlePromptKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        document.getElementById('generate-text-button').click();
+    }
+}
 
-//Image Input
-document.getElementById('uploadImage').addEventListener('click', function() {
-    document.getElementById('imageInput').click();
-});
+function handleDropdownButtonClick() {
+    // Close all other dropdowns
+    document.querySelectorAll('.dropdown-panel.show').forEach(function (panel) {
+        if (panel !== this.nextElementSibling) {
+            panel.classList.remove('show');
+        }
+    }.bind(this));
 
-document.getElementById('imageInput').addEventListener('change', async function() {
+    // Toggle the clicked dropdown
+    this.nextElementSibling.classList.toggle('show');
+}
+
+function handleUploadImageClick() {
+    document.getElementById('image-input').click();
+}
+
+async function handleImageInputChange() {
     const files = this.files;
     if (files.length > 0) {
         const file = files[0];
         const reader = new FileReader();
-        reader.onloadend = async function() {
+        reader.onloadend = async function () {
             selectedImages.push(await prepareImage(reader.result));
         };
         reader.readAsDataURL(file);
     }
+}
+
+function scrollToBottom() {
+    const chatDisplay = document.getElementById('chat-display');
+    chatDisplay.scrollTop = chatDisplay.scrollHeight;
+}
+
+//On page load
+document.addEventListener('DOMContentLoaded', function () {
+    enableAutoResize('prompt');
+    enableAutoResize('permanent-prompt');
+    loadSliders();
+    getFolders();
 });
 
-export {
-    transcribe_url,
-    text_generate,
-    text2speech,
-    abort,
-    processContext,
-    contextTTS,
-    getFolders,
-}
+// Attach event handlers
+document.getElementById('generate-text-button').addEventListener('click', () => {
+    const api_server = document.getElementById('kobold-api-server').value;
+    const permanentPrompt = document.getElementById('permanent-prompt').value;
+    const promptInput = document.getElementById('prompt').value;
+
+    // Get the user and character names from the input fields
+    const userName = document.getElementById('user-input').value;
+    const characterName = document.getElementById('character-name-input').value;
+
+    //stop sequence
+    const stop_sequence = [];
+    stop_sequence.push('\n' + userName + ':');
+    stop_sequence.push(document.getElementById('stop-sequence-input').value);
+
+    // Display user's input
+    const userMessage = document.createElement('div');
+    userMessage.className = 'chat-message user';
+    userMessage.innerHTML = `<strong>${userName}:</strong> ${promptInput}`;
+    document.getElementById('chat-display').appendChild(userMessage);
+    scrollToBottom();
+
+    // Create div for AI's response
+    const aiMessage = document.createElement('div');
+    aiMessage.className = 'chat-message ai';
+    aiMessage.innerHTML = `<strong>${characterName}:</strong> <span class="ellipsis">...</span>`;
+    document.getElementById('chat-display').appendChild(aiMessage);
+    scrollToBottom();
+
+    chatHistory.push({ role: 'user', message: promptInput });
+    const prompt = constructFullPrompt(permanentPrompt, chatHistory, userName, characterName);
+
+    textGenerate({ prompt, settings: { api_server, stop_sequence, streaming: true } }, function (chunk) {
+        if (chunk === ' ') { chunk = '&nbsp;'; }
+    
+        // Update AI's response
+        if (aiMessage.querySelector('.ellipsis')) {
+            aiMessage.innerHTML = `<strong>${characterName}:</strong> ${chunk}`;
+        } else {
+            aiMessage.innerHTML += chunk;
+        }
+        scrollToBottom();
+    });
+
+    document.getElementById('prompt').value = '';
+});
+
+// document.getElementById('generate-text-button').addEventListener('click', handleGenerateButtonClick);
+
+document.getElementById('text-2-speech-button').addEventListener('click', handleTextToSpeechButtonClick);
+
+document.getElementById('transcribe-url-button').addEventListener('click', handleTranscribeUrlButtonClick);
+
+document.getElementById('process-context-button').addEventListener('click', handleProcessContextButtonClick);
+
+document.getElementById('context-tts-button').addEventListener('click', handleContextTTSButtonClick);
+
+document.getElementById('clear-chat').addEventListener('click', clearChat);
+
+document.getElementById('prompt').addEventListener('keydown', handlePromptKeydown);
+
+document.querySelectorAll('.dropdown-button').forEach(function (button) {
+    button.addEventListener('click', handleDropdownButtonClick);
+});
+
+//Image Input
+document.getElementById('upload-image').addEventListener('click', handleUploadImageClick);
+
+document.getElementById('image-input').addEventListener('change', handleImageInputChange);
