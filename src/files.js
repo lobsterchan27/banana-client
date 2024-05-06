@@ -22,7 +22,6 @@ router.get('/context-folders', jsonParser, checkRequestBody, async (request, res
         const contextDir = path.join(process.cwd(), 'public', 'context');
 
         const folderStructure = await getFolderStructure(contextDir);
-        console.log(JSON.stringify(folderStructure));
         response.json(folderStructure);
     } catch (err) {
         console.error('Error:', err);
