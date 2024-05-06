@@ -222,7 +222,7 @@ async function makeRequest(prompt, images, settings, controller) {
             const url = settings.streaming ? `${settings.api_server}/extra/generate/stream` : `${settings.api_server}/v1/generate`;
             const fetchResponse = await fetch(url, { method: 'POST', timeout: 0, ...args });
             if (!fetchResponse.ok) {
-                const errorText = await response.text();
+                const errorText = await fetchResponse.text();
                 console.log(`Kobold returned error: ${fetchResponse.status} ${fetchResponse.statusText} ${errorText}`);
 
                 try {

@@ -122,7 +122,7 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
         if (!request.body.voice) {
             request.body.voice = 'reference';
         }
-        const filePath = path.join(saveFolder, `${request.body.voice}_${Date.now()}.wav`);
+        const filePath = path.join(saveFolder, `${request.body.voice}_${Date.now()}.wav`).replace(/\\/g, '/');
 
         const streamPipeline = promisify(pipeline);
         await streamPipeline(fetchResponse.body, fs.createWriteStream(filePath));
