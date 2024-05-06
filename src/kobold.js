@@ -10,6 +10,7 @@ const {
     convertImagesToBase64,
     loadJson,
     handleStream,
+    prepareImage,
 } = require('./utils');
 const fs = require('fs');
 
@@ -27,6 +28,44 @@ const router = express.Router();
  * @returns {Object} The response object. If the request was successful message or error will be returned.
  */
 router.post('/generate/context', jsonParser, checkRequestBody, async function (request, response) {
+    const char = 'Rachel'
+    const audiolabel = 'Video Audio: '
+    const lb = "\n"
+    const userToken = '\n\n### Instruction:\n'
+    const assistantToken = '\n\n### Response:\n'
+    request.body.settings.stop_sequence = ['###']
+    const permanentPrompt = `### Instruction:` + lb +
+        `Write ${char}'s next reply in a fictional roleplay where ${char} is watching the video and reacting to it. Use the context from both the image and the audio to make comments. Avoid repetition, don't loop.` + lb +
+        `The image is a chronological storyboard of frames from the video. Audio transcription will be provided as well.` + lb +
+        `Use the provided character sheet and example dialogue for formatting direction and character speech patterns.` + lb + lb +
+        `Description of ${char}:` + lb +
+        `${char}'s Appearance: Warm, inviting smile that lights up her face.` + lb +
+        `Warm, deep brown eyes with long lashes that give a naturally endearing look` + lb +
+        `Delicate facial features with a button nose and full, rosy cheeks` + lb +
+        `Fair, porcelain skin with a healthy, radiant glow` + lb +
+        `Sleek, straight black hair styled in an effortless, shoulder-length cut` + lb +
+        `Petite and slender build with a youthful, athletic physique` + lb +
+        `Dresses in cute, trendy outfits that are stylish yet comfortable (e.g. oversized sweaters, casual dresses)` + lb +
+        `Natural makeup look with a pop of color on the lips` + lb +
+        `Carries herself with an aura of confidence and understated sensuality` + lb + lb +
+        `${char}'s Personality:` + lb +
+        `Exudes a cool, relaxed vibe that puts others at ease` + lb +
+        `Speaks in a low, sultry tone that captivates her audience` + lb +
+        `Witty and playful, with a mischievous sense of humor` + lb +
+        `Unapologetically authentic and comfortable in her own skin` + lb +
+        `Passionate about her interests, yet laidback in her approach` + lb +
+        `Radiates an effortless grace and poise that draws others in` + lb + lb +
+        // `Sultry, Relaxed, Witty, Authentic, Passionate, Graceful, Unapproachable, Confident ,Mysterious`
+        `Scenario Backstory:` + lb +
+        `${char} is a popular content creator known for her reaction videos. She has a loyal following who love her genuine and engaging personality.` + lb + lb +
+        `Scenario: The image is a chronological storyboard of frames from the video. Accompanying audio transcription to the video with be marked with Video Audio:` + lb + lb +
+        `Play the role of ${char}. Taking the above information into consideration. Write only ${char}'s dialogue in response to the video and audio.` + lb + lb +
+        `### Response:` + lb +
+        `${char}: Ok, let's see what we have here. I'm excited to see what's in store for us today!`;
+
+    const history = [];
+
+
     console.log('Received Kobold context generation request:', request.body);
     const fileName = request.body.context;
 
@@ -39,25 +78,53 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     }
 
     const controller = createAbortController(request, response);
+
+    const keys = Object.keys(json);
+    const lastKey = keys[keys.length - 1];
+
     for (let key in json) {
-        if (json[key].hasOwnProperty('generatedResponse')) {
-            console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
-            continue;
-        }
+        // if (json[key].hasOwnProperty('generatedResponse')) {
+        //     console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
+        //     continue;
+        // }
+
         const imagefile = json[key].filename;
-        const concatenatedText = json[key].segments.map(segment => segment.text).join(' ');
-        console.log(`Generating text for ${imagefile} with prompt: ${concatenatedText}\n`);
-        const imageLocation = path.join('public', 'context', fileName, imagefile);
+
+        let concatenatedText = audiolabel + json[key].segments.map(segment => segment.text).join(' ');
+        if (key === lastKey) {
+            concatenatedText = "System: This is the last part of the video. Let's give our viewers a good closer.\n" + concatenatedText;
+        }
+
+        //temp hack full prompt
+        history.push({ role: 'user', message: concatenatedText });
+        const fullPrompt = permanentPrompt + history.map(item => (item.role === 'user' ? userToken : assistantToken) + item.message) + assistantToken;
+
         try {
-            const fetchResponse = await makeRequest(concatenatedText, [imageLocation], request.body.settings, controller);
+            console.log(`Image: ${imagefile}\nPrompt: ${concatenatedText}\n`);
+            const imageLocation = path.join('public', 'context', fileName, imagefile);
+            const images = [await prepareImage(imageLocation)];
+
+            const fetchResponse = await makeRequest(fullPrompt, images, request.body.settings, controller);
             if (request.body.settings.streaming) {
                 const data = await handleStream(fetchResponse, response);
                 json[key].generatedResponse = data;
+
+                // Add the assistant's response to the history
+                history.push({ role: 'assistant', message: data });
             } else {
                 const fullResponse = await fetchResponse.json();
-                const data = fullResponse.results[0].text;
-                console.log('Response:', data);
+
+                //commented out for now
+                // const data = fullResponse.results[0].text;
+
+                //temp clean response
+                const data = fullResponse.results[0].text.replace(/###/g, '').replace(/\n\n$/g, '').replace(/,/g, '').trim();
+                console.log(data);
+
                 json[key].generatedResponse = data;
+
+                // Add the assistant's response to the history
+                history.push({ role: 'assistant', message: data });
             }
         } catch (error) {
             console.error('Error occurred during request:', error);
@@ -126,6 +193,7 @@ async function makeRequest(prompt, images, settings, controller) {
         "temperature": 0.5,
         "top_p": 0.9,
         "max_length": 200,
+        "stop_sequence": settings.stop_sequence,
     };
 
     if (images && images.length > 0) {
