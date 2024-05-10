@@ -1,9 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const app = express();
-const port = process.env.PORT || 8128;
-const hostname = '0.0.0.0';
+const port = Number(process.env.PORT) || 8128;
+const hostname = process.env.HOSTNAME || '0.0.0.0';
 
 var corsOptions = {
     origin: '*',
@@ -24,6 +25,8 @@ app.use('/audio', require('./src/audio').router);
 
 app.use('/files', require('./src/files').router);
 
+app.use('/video', require('./src/video').router);
+
 app.listen(port, hostname, () => {
-    console.log(`Server listening on port ${port}`);
+    console.log(`Server on http://${hostname}:${port}`);
 });

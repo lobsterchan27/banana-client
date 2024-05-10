@@ -1,5 +1,5 @@
-const ffmpeg = require("fluent-ffmpeg");
-const fs = require("fs");
+const ffmpeg = require('fluent-ffmpeg');
+const fs = require('fs');
 
 async function checkFileExists(file) {
   return new Promise((resolve, reject) => {
@@ -14,10 +14,10 @@ async function checkFileExists(file) {
   });
 }
 
-async function validateFiles({ baseVideoPath, overlays }) {
-  const paths = [baseVideoPath, ...overlays.map((overlay) => overlay.path)];
+async function validateFiles(files) {
+  const paths = [files.baseVideoPath, files.baseAudioPath, files.overlay];
   try {
-    await Promise.all(paths.map((file) => checkFileExists(file)));
+    await Promise.all(paths.map(file => checkFileExists(file)));
     console.log("All files are accessible.");
     return true;
   } catch (error) {
@@ -26,56 +26,38 @@ async function validateFiles({ baseVideoPath, overlays }) {
   }
 }
 
-async function processVideo({ baseVideoPath, overlays, outputPath }) {
-    if (!(await validateFiles({ baseVideoPath, overlays }))) {
-      console.error("Validation failed. Exiting process.");
-      return null;
-    }
-  
-    return new Promise((resolve, reject) => {
-      let command = ffmpeg(baseVideoPath)
-        .on('error', function(err) {
-          console.error('Error processing video:', err.message);
-          reject(err);
-        })
-        .on('end', function() {
-          console.log('Processing finished.');
-          resolve(outputPath);
-        });
-  
-      // Prepare the complex filter string
-      let filterComplex = '';
-      let inputs = '0:v'; // Initial input from the base video
-      let currentTime = 0; // Start time for the first overlay
-  
-      overlays.forEach((overlay, index) => {
-        command.input(overlay.path);
-        let overlayInput = `${index+1}:v`; // Label for the overlay input
-        let nextInput = `tmp${index}`; // Temporary label for the next input
-      
-        // Configure the overlay filter
-        let startTime = currentTime;
-        let endTime = currentTime + overlay.duration;
-        console.log(startTime, endTime)
-        // If this is the second clip, add the reverse filter
-        if (index === 1) {
-          filterComplex += `[${overlayInput}]reverse[${overlayInput}rev];`;
-          overlayInput += 'rev';
-        }
-      
-        filterComplex += `[${inputs}][${overlayInput}]overlay=enable='between(t,${startTime},${endTime})'[${nextInput}];`;
-        inputs = nextInput; // Update inputs for the next iteration
-        currentTime += overlay.duration; // Update currentTime to the end time of the current overlay
-      });
-  
-      // Apply the complex filter
-      command.complexFilter(filterComplex.slice(0, -1), inputs)
-        .output(outputPath)
-        .videoCodec('libx264')
-        .format('mp4')
-        .run();
-    });
+async function processVideo({ baseVideoPath, baseAudioPath, overlay, outputPath }) {
+  if (!(await validateFiles({ baseVideoPath, baseAudioPath, overlay }))) {
+    console.error("Validation failed. Exiting process.");
+    return null;
   }
+
+  return new Promise((resolve, reject) => {
+    ffmpeg()
+      .addInput(baseVideoPath)
+      .addInput(baseAudioPath)
+      .addInput(overlay)
+      .complexFilter([
+        '[0:v][2:v]overlay=shortest=1[outv]',       // Overlay video on base video
+        '[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[basea]', // Convert base audio to a common format
+        '[2:a]aformat=sample_fmts=s16:channel_layouts=stereo[overa]', // Convert overlay audio to a common format
+        '[basea][overa]amix=inputs=2:duration=longest[outa]'          // Mix base audio and overlay audio
+      ])
+      .outputOptions([
+        '-map [outv]', // Map the video output from the filter graph
+        '-map [outa]'  // Map the audio output from the filter graph
+      ])
+      .on('error', (err) => {
+        console.error('Error processing video:', err);
+        reject(err);
+      })
+      .on('end', () => {
+        console.log('Video processing completed.');
+        resolve(outputPath);
+      })
+      .save(outputPath);
+  });
+}
 
 
 module.exports = { processVideo };
