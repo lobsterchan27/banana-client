@@ -1,6 +1,6 @@
 import React, { useContext, useRef, useLayoutEffect } from 'react';
 import { FormContext } from '../contexts/FormContext';
-import './textAreaInput.css';
+import './css/textAreaInput.css';
 
 const TextAreaInput = ({ name }) => {
     const { form, setForm } = useContext(FormContext);

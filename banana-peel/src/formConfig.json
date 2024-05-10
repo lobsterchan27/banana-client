@@ -4,13 +4,30 @@
     "description": "Prompt sent to the model.",
     "type": "string"
   },
-  "api_servers": {
-    "value": [],
-    "description": "API server to use.",
-    "type": "array",
-    "items": {
-      "type": "string"
-    }
+  "permanent_prompt": {
+    "value": "",
+    "description": "Permanent prompt sent to the model. This prompt will not be reset when the main prompt is changed.",
+    "type": "string"
+  },
+  "user": {
+    "value": "",
+    "description": "Username.",
+    "type": "string"
+  },
+  "character": {
+    "value": "",
+    "description": "Character name.",
+    "type": "string"
+  },
+  "banana_api_url": {
+    "value": "",
+    "description": "URL of the Banana API.",
+    "type": "string"
+  },
+  "kobold_api_url": {
+    "value": "",
+    "description": "URL of the Kobold API.",
+    "type": "string"
   },
   "tts_prompt": {
     "value": "",

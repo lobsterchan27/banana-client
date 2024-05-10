@@ -4,9 +4,9 @@ import TextAreaInput from "./TextAreaInput";
 import Checkbox from "@mui/material/Checkbox";
 import { FormContext } from "../contexts/FormContext";
 import formConfig from "../formConfig";
-import "./paramWrapper.css";
+import "./css/paramWrapper.css";
 
-export default function ParamWrapper() {
+export default function ParamWrapper({ includeKeys }) {
   const { form, setForm } = useContext(FormContext);
   const paramConfig = formConfig;
 
@@ -16,50 +16,45 @@ export default function ParamWrapper() {
 
   return (
     <ul className="paramWrapper">
-      {Object.keys(paramConfig).map((key) => {
-        switch (key) {
-          case "prompt":
-          case "images":
-          case "api_servers":
-          case "tts_prompt":
-          case "transcribe_video_url":
-            return null;
-          default:
-            switch (paramConfig[key].type) {
-              case "string":
-                return (
-                  <li key={key} className="paramItem">
-                    <label>
-                      {key}:
-                      <TextAreaInput name={key} />
-                    </label>
-                  </li>
-                );
-              case "float":
-              case "integer":
-                return (
-                  <li key={key} className="paramItem">
-                    <label>
-                      {key}:
-                      <InputSlider name={key} />
-                    </label>
-                  </li>
-                );
-              case "boolean":
-                return (
-                  <li className="paramItem">
-                    <label>{key}:</label>
+      {includeKeys && includeKeys.map((key) => {
+        if (paramConfig[key]) {  // Ensure the key exists in the configuration
+          switch (paramConfig[key].type) {
+            case "string":
+              return (
+                <li key={key} className="paramItem">
+                  <label>
+                    {key}:
+                    <TextAreaInput name={key} />
+                  </label>
+                </li>
+              );
+            case "float":
+            case "integer":
+              return (
+                <li key={key} className="paramItem">
+                  <label>
+                    {key}:
+                    <InputSlider name={key} />
+                  </label>
+                </li>
+              );
+            case "boolean":
+              return (
+                <li key={key} className="paramItem">
+                  <label>
+                    {key}:
                     <Checkbox
-                      className="Checkbox"
                       checked={form[key]}
                       onChange={handleCheckbox(key)}
                     />
-                  </li>
-                );
-              default:
-                return null; // return null when there's no match
-            }
+                  </label>
+                </li>
+              );
+            default:
+              return null;  // Return null when there's no match or unsupported type
+          }
         }
+        return null;  // Return null for keys not found in config
       })}
     </ul>
   );

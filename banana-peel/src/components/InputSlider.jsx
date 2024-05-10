@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import Slider from '@mui/material/Slider';
 import MuiInput from '@mui/material/Input';
 import formConfig from '../formConfig';
-import './inputSlider.css';
+import './css/inputSlider.css';
 
 const Input = styled(MuiInput)`
   width: 42px;

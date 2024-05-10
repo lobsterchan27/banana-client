@@ -6,8 +6,8 @@ import Sidebar from './components/Sidebar';
 function App() {
   return(
     <FormProvider>
-        <Sidebar />
       <div className="App">
+        <Sidebar />
         <PromptForm />
       </div>
     </FormProvider>

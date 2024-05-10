@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FormContext } from "../contexts/FormContext";
 import useLocalStorage from "../hooks/useLocalStorage";
-import "./presetComponent.css";
+import "./css/presetComponent.css";
 
 
 const PresetComponent = () => {

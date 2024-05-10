@@ -4,7 +4,7 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import { fetchLMM, abort } from "../utils/LMM";
 import fetchStitch from "../utils/fetchStitch";
 import TextAreaInput from "./TextAreaInput";
-import "./promptForm.css";
+import "./css/promptForm.css";
 
 const PromptForm = () => {
   const { form, setForm } = useContext(FormContext);
