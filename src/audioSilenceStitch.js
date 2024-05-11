@@ -1,7 +1,50 @@
-const path = require("path");
 const ffmpeg = require("fluent-ffmpeg");
-const { loadJson } = require("./utils");
+const path = require("path");
+const fs = require("fs").promises;
 const wavFileInfo = require("wav-file-info");
+const { loadJson } = require("./utils");
+const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+async function audioSilenceStitch(contextName) {
+  const contextPath = path.join(
+    process.cwd(),
+    "public",
+    "context",
+    contextName
+  );
+  const jsonPath = path.join(contextPath, `${contextName}.json`);
+  const contextChunks = await loadJson(jsonPath);
+  const outputFile = path.join(contextPath, `${contextName}_final_output.wav`);
+  const processedFiles = [];
+  let prevEntryTime = 0;
+  let info = {};
+
+  for (const key of Object.keys(contextChunks)) {
+    const segment = contextChunks[key];
+    const entryTime = segment.segments[segment.segments.length - 1].end;
+    const currentAudioFilePath = path.join(
+      contextPath,
+      `${contextName}_${key}.wav`
+    );
+
+    const silenceDuration = Math.max(0, Math.floor(entryTime - prevEntryTime) - (prevEntryTime || 0));
+    
+
+    info = await getAudioInfo(currentAudioFilePath);
+
+    const outputFile = path.join(
+      contextPath, `${contextName}_${key}_output.wav`);
+    processedFiles.push(outputFile);
+
+    prevEntryTime = entryTime;
+    await addSilence(currentAudioFilePath, outputFile, silenceDuration);
+  }
+
+  concatenateAudios(processedFiles, outputFile);
+ 
+}
 
 function addSilence(inputFile, outputFile, silenceDuration) {
   return new Promise((resolve, reject) => {
@@ -32,36 +75,17 @@ function concatenateAudios(filePaths, outputFile) {
     .save(outputFile);
 }
 
-const audioSilenceStitch = async () => {
-  const contextPath = path.join(__dirname, "../public", "context", "context.jsonl");
-  const contextChunks = await loadJson(contextPath);
-  let prevEndTime = 0;
-  let prevAudioFile = 0;
-  const entries = Object.entries(contextChunks);
-  const processedFiles = [];
-
-  for (let i = 0; i < entries.length; i++) {
-    const [key, value] = entries[i];
-    const lastEntry = value["segments"][value.segments.length - 1]["end"];
-    const filename = value.filename; // Assuming the filename is in the value object
-    const currentAudioFilePath = path.join(__dirname, "../public", "context", `${filename}`);
-    const silenceDuration = Math.max(0, Math.floor(lastEntry - prevEndTime) - (prevAudioFile || 0));
-    const outputFile = `public/context/${filename}`; // Also replacing it here
-    processedFiles.push(outputFile);
-
-    await new Promise((resolve, reject) => {
-      wavFileInfo.infoByFilename(currentAudioFilePath, (err, info) => {
-        if (err) return reject(err);
-        prevAudioFile = info.duration;
-        resolve();
-      });
+async function getAudioInfo(filePath) {
+  return new Promise((resolve, reject) => {
+    wavFileInfo.infoByFilename(filePath, (err, info) => {
+      if (err) {
+        console.error("Error getting audio info:", filePath, err);
+        reject(err);
+      } else {
+        resolve(info);
+      }
     });
+  });
+}
 
-    prevEndTime = lastEntry;
-    await addSilence(currentAudioFilePath, outputFile, silenceDuration);
-  }
-
-  concatenateAudios(processedFiles, 'public/context/final_output.wav');
-};
-
-module.exports = { audioSilenceStitch };
+module.exports = audioSilenceStitch;

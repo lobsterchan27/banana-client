@@ -1,7 +1,7 @@
-/* *{border:solid red 2px;}
+*{border:solid red 2px;}
 *:nth-child(1){border:solid 2px green;}
 *:nth-child(2){border:solid 2px blue;}
-*:nth-child(3){border:solid 2px orange;} */
+*:nth-child(3){border:solid 2px orange;}
 
 * {
     margin: 0;
@@ -10,7 +10,7 @@
     list-style: none;
 }
 
-html{
+body{
     background-color: #cccebb;
     font-family: 'Roboto', sans-serif;
     margin: 0;

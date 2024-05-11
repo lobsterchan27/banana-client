@@ -2,12 +2,14 @@
   "prompt": {
     "value": "",
     "description": "Prompt sent to the model.",
-    "type": "string"
+    "type": "string",
+    "textArea": true
   },
   "permanent_prompt": {
     "value": "",
     "description": "Permanent prompt sent to the model. This prompt will not be reset when the main prompt is changed.",
-    "type": "string"
+    "type": "string",
+    "textArea": true
   },
   "user": {
     "value": "",
@@ -32,7 +34,8 @@
   "tts_prompt": {
     "value": "",
     "description": "Text to speech prompt.",
-    "type": "string"
+    "type": "string",
+    "textArea": true
   },
   "transcribe_video_url": {
     "value": "",
@@ -89,7 +92,8 @@
   "stop_sequence": {
     "description": "An array of string sequences where the API will stop generating further tokens. The returned text WILL contain the stop sequence.",
     "items": {
-      "type": "string"
+      "type": "string",
+      "textArea": true
     },
     "type": "array"
   },
@@ -181,7 +185,8 @@
   "grammar": {
     "value": "",
     "description": "KoboldCpp ONLY. A string containing the GBNF grammar to use.",
-    "type": "string"
+    "type": "string",
+    "textArea": true
   },
   "grammar_retain_state": {
     "description": "KoboldCpp ONLY. If true, retains the previous generation's grammar state, otherwise it is reset on new generation.",
@@ -191,13 +196,15 @@
   "memory": {
     "value": "",
     "description": "KoboldCpp ONLY. If set, forcefully appends this string to the beginning of any submitted prompt text. If resulting context exceeds the limit, forcefully overwrites text from the beginning of the main prompt until it can fit. Useful to guarantee full memory insertion even when you cannot determine exact token count.",
-    "type": "string"
+    "type": "string",
+    "textArea": true
   },
   "images": {
     "value": [],
     "description": "KoboldCpp ONLY. If set, takes an array of base64 encoded strings, each one representing an image to be processed.",
     "items": {
-      "type": "string"
+      "type": "string",
+      "textArea": true
     },
     "type": "array"
   }

@@ -14,20 +14,36 @@ export default function ParamWrapper({ includeKeys }) {
     setForm({ ...form, [key]: e.target.checked });
   };
 
+  const handleArrayChange = (key) => (e) => {
+    const values = e.target.value.split(',').map(item => item.trim());
+    setForm({ ...form, [key]: values });
+  };
+
   return (
     <ul className="paramWrapper">
       {includeKeys && includeKeys.map((key) => {
         if (paramConfig[key]) {  // Ensure the key exists in the configuration
           switch (paramConfig[key].type) {
             case "string":
-              return (
-                <li key={key} className="paramItem">
-                  <label>
-                    {key}:
-                    <TextAreaInput name={key} />
-                  </label>
-                </li>
-              );
+              if (paramConfig[key].textArea) {
+                return (
+                  <li key={key} className="paramItem">
+                    <label>
+                      {key}:
+                      <TextAreaInput name={key} />
+                    </label>
+                  </li>
+                );
+              } else {
+                return (
+                  <li key={key} className="paramItem">
+                    <label>
+                      {key}:
+                      <input type="text" value={form[key] || ''} onChange={(e) => setForm({ ...form, [key]: e.target.value })} />
+                    </label>
+                  </li>
+                );
+              }
             case "float":
             case "integer":
               return (
@@ -50,6 +66,22 @@ export default function ParamWrapper({ includeKeys }) {
                   </label>
                 </li>
               );
+            case "array":
+              if (paramConfig[key].items && paramConfig[key].items.type === "string") {
+                return (
+                  <li key={key} className="paramItem">
+                    <label>
+                      {key}:
+                      <input
+                        type="text"
+                        value={form[key]?.join(', ') || ''}
+                        onChange={handleArrayChange(key)}
+                      />
+                    </label>
+                  </li>
+                );
+              }
+              break;
             default:
               return null;  // Return null when there's no match or unsupported type
           }

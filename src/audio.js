@@ -1,12 +1,16 @@
 const express = require('express');
+const path = require('path');
+const { jsonParser } = require('./common');
 
-const { audioSilenceStitch } = require('./audioSilenceStitch');
+const audioSilenceStitch = require('./audioSilenceStitch');
 
 const router = express.Router();
 
-router.get('/silence-stitch', async function (request, response) {
+router.post('/silence-stitch', jsonParser, async function (request, response) {
     console.log('Silence Stitching:');
-    const savepath = await audioSilenceStitch();
+    const contextName = request.body.contextName;
+    console.log(contextName)
+    const savepath = await audioSilenceStitch(contextName);
     response.json({ savepath });
 });
 

@@ -3,12 +3,15 @@ import PromptForm from "./components/PromptForm";
 import './App.css';
 import Sidebar from './components/Sidebar';
 
+
 function App() {
   return(
     <FormProvider>
       <div className="App">
         <Sidebar />
-        <PromptForm />
+        <main>
+          <PromptForm />
+        </main>
       </div>
     </FormProvider>
   );

@@ -38,10 +38,10 @@ async function processVideo({ baseVideoPath, baseAudioPath, overlay, outputPath 
       .addInput(baseAudioPath)
       .addInput(overlay)
       .complexFilter([
-        '[0:v][2:v]overlay=shortest=1[outv]',       // Overlay video on base video
+        '[0:v][2:v]overlay[outv]',   // Overlay video on base video continuously
         '[1:a]aformat=sample_fmts=s16:channel_layouts=stereo[basea]', // Convert base audio to a common format
         '[2:a]aformat=sample_fmts=s16:channel_layouts=stereo[overa]', // Convert overlay audio to a common format
-        '[basea][overa]amix=inputs=2:duration=longest[outa]'          // Mix base audio and overlay audio
+        '[basea][overa]amix=inputs=2:duration=longest[outa]'          // Mix base audio and overlay audio considering the longest input
       ])
       .outputOptions([
         '-map [outv]', // Map the video output from the filter graph
