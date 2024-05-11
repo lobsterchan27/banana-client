@@ -7,6 +7,8 @@ const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+// FUCKED
+
 async function audioSilenceStitch(contextName) {
   const contextPath = path.join(
     process.cwd(),
