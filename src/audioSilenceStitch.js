@@ -23,7 +23,7 @@ async function audioSilenceStitch(contextName) {
 
     // Prepare FFmpeg command parts
     if (silenceDuration > 0) {
-      ffmpegInputs.push(`-f lavfi -t ${silenceDuration} -i anullsrc=r=44100:cl=mono`);
+      ffmpegInputs.push(`-f lavfi -t ${silenceDuration} -i anullsrc=r=48000:cl=mono`);
       concatFilter.push(`[${streamIndex}:a]`);
       streamIndex++;
     }
@@ -37,7 +37,8 @@ async function audioSilenceStitch(contextName) {
 
   // Build and execute FFmpeg command
   let filterComplex = `${concatFilter.join("")}concat=n=${concatFilter.length}:v=0:a=1`;
-  let ffmpegCmd = `ffmpeg ${ffmpegInputs.join(" ")} -filter_complex "${filterComplex}" -ar 44100 "${outputFile}"`;
+  let ffmpegCmd = `ffmpeg ${ffmpegInputs.join(" ")} -filter_complex "${filterComplex}" "${outputFile}"`;
+  console.log("FFmpeg command:", ffmpegCmd)
 
   exec(ffmpegCmd, (error, stdout, stderr) => {
     if (error) {
