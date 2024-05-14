@@ -1,80 +1,52 @@
-const ffmpeg = require("fluent-ffmpeg");
 const path = require("path");
-const fs = require("fs").promises;
 const wavFileInfo = require("wav-file-info");
 const { loadJson } = require("./utils");
-const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
-
-ffmpeg.setFfmpegPath(ffmpegPath);
-
-// FUCKED
+const { exec } = require('child_process');
 
 async function audioSilenceStitch(contextName) {
-  const contextPath = path.join(
-    process.cwd(),
-    "public",
-    "context",
-    contextName
-  );
+  const contextPath = path.join(process.cwd(), "public", "context", contextName);
   const jsonPath = path.join(contextPath, `${contextName}.json`);
   const contextChunks = await loadJson(jsonPath);
   const outputFile = path.join(contextPath, `${contextName}_final_output.wav`);
-  const processedFiles = [];
+
   let prevEntryTime = 0;
-  let info = {};
+  let prevInfoDuration = 0;
+  let ffmpegInputs = [];
+  let concatFilter = [];
+  let streamIndex = 0;  // Initialize stream index
 
-  for (const key of Object.keys(contextChunks)) {
-    const segment = contextChunks[key];
+  for (const [key, segment] of Object.entries(contextChunks)) {
     const entryTime = segment.segments[segment.segments.length - 1].end;
-    const currentAudioFilePath = path.join(
-      contextPath,
-      `${contextName}_${key}.wav`
-    );
+    const currentAudioFilePath = path.join(contextPath, `${contextName}_${key}.wav`);
+    let info = await getAudioInfo(currentAudioFilePath);
+    const silenceDuration = Math.max(0, Math.floor(entryTime - prevEntryTime - prevInfoDuration));
 
-    const silenceDuration = Math.max(0, Math.floor(entryTime - prevEntryTime) - (prevEntryTime || 0));
-    
+    // Prepare FFmpeg command parts
+    if (silenceDuration > 0) {
+      ffmpegInputs.push(`-f lavfi -t ${silenceDuration} -i anullsrc=r=48000:cl=mono`);
+      concatFilter.push(`[${streamIndex}:a]`);
+      streamIndex++;
+    }
+    ffmpegInputs.push(`-i "${currentAudioFilePath}"`);
+    concatFilter.push(`[${streamIndex}:a]`);
+    streamIndex++;
 
-    info = await getAudioInfo(currentAudioFilePath);
-
-    const outputFile = path.join(
-      contextPath, `${contextName}_${key}_output.wav`);
-    processedFiles.push(outputFile);
-
+    prevInfoDuration = info.duration;
     prevEntryTime = entryTime;
-    await addSilence(currentAudioFilePath, outputFile, silenceDuration);
   }
 
-  concatenateAudios(processedFiles, outputFile);
- 
-}
+  // Build and execute FFmpeg command
+  let filterComplex = `${concatFilter.join("")}concat=n=${concatFilter.length}:v=0:a=1`;
+  let ffmpegCmd = `ffmpeg ${ffmpegInputs.join(" ")} -filter_complex "${filterComplex}" "${outputFile}"`;
+  console.log("FFmpeg command:", ffmpegCmd)
 
-function addSilence(inputFile, outputFile, silenceDuration) {
-  return new Promise((resolve, reject) => {
-    ffmpeg()
-      .input("anullsrc=channel_layout=stereo:sample_rate=44100")
-      .inputFormat("lavfi")
-      .inputOptions(["-t", silenceDuration])
-      .input(inputFile)
-      .complexFilter(["[0:a][1:a]concat=n=2:v=0:a=1"])
-      .output(outputFile)
-      .on("end", () => resolve())
-      .on("error", err => reject(err))
-      .run();
+  exec(ffmpegCmd, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing FFmpeg: ${error}`);
+      return;
+    }
+    console.log("FFmpeg operation completed successfully.");
   });
-}
-
-function concatenateAudios(filePaths, outputFile) {
-  const merged = ffmpeg();
-  filePaths.forEach(filePath => {
-    merged.input(filePath);
-  });
-  merged
-    .complexFilter([
-      'concat=n=' + filePaths.length + ':v=0:a=1'
-    ])
-    .on('end', () => console.log('Files were merged'))
-    .on('error', err => console.log('Error merging files', err))
-    .save(outputFile);
 }
 
 async function getAudioInfo(filePath) {
