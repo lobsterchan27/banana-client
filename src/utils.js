@@ -122,13 +122,14 @@ function forwardFetchResponse(from, to) {
     });
 }
 
-async function requestTTS(prompt, voice, settings) {
-    const url = settings.api_server + '/text2speech';
+async function requestTTS(prompt, voice, settings, endpoint) {
+    const url = settings.api_server + endpoint;
     const payload = {
         prompt: prompt,
         voice: voice,
     };
 
+    let fetchResponse;
     try {
         fetchResponse = await fetch(url, {
             method: 'POST',
@@ -143,7 +144,6 @@ async function requestTTS(prompt, voice, settings) {
     if (!fetchResponse.ok) {
         const errorText = await fetchResponse.text();
         console.log(`Kobold returned error: ${fetchResponse.status} ${fetchResponse.statusText} ${errorText}`);
-
         try {
             const errorJson = JSON.parse(errorText);
             const message = errorJson?.detail?.msg || errorText;
@@ -152,6 +152,7 @@ async function requestTTS(prompt, voice, settings) {
             throw { status: 400, error: { message: errorText } };
         }
     }
+
     return fetchResponse;
 }
 
