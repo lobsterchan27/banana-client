@@ -44,7 +44,6 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
         if (!fetchResponse.ok) {
             throw new Error(`HTTP error ${fetchResponse.status}`);
         }
-
         const contentType = fetchResponse.headers.get('content-type');
         console.log('Received headers:', fetchResponse.headers);
 
@@ -62,8 +61,9 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
                 file.pipe(fs.createWriteStream(saveTo));
 
                 file.on('data', function (data) {
-                    console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
+                    // console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
                 });
+
                 file.on('end', function () {
                     console.log('File [' + fieldname + '] Finished');
                 });
@@ -94,6 +94,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
                     return response.status(500).send('An error occurred');
                 }
             });
+
         }
     } catch (error) {
         console.error('Error:', error);
@@ -114,7 +115,8 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 router.post('/text2speech', jsonParser, checkRequestBody, async function (request, response) {
     console.log('Received TTS request:', request.body);
     try {
-        const fetchResponse = await requestTTS(request.body.prompt, request.body.voice, request.body.settings);
+        const fetchResponse = await requestTTS(request.body.prompt, request.body.voice, request.body.settings, '/text2speech');
+        
 
         const saveFolder = path.join('public', 'tts');
         fs.mkdirSync(saveFolder, { recursive: true });
@@ -146,38 +148,95 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
  * @param {string} request.body.settings.api_server - The API server to use for text to speech.
  */
 router.post('/text2speech/context', jsonParser, async function (request, response) {
+    const url = request.body.settings.api_server + '/text2speech/align';
     console.log('Received context TTS request:', request.body);
     const fileName = request.body.context;
+    const filePath = `public/context/${fileName}/${fileName}.json`;
 
     let json;
     try {
-        json = await loadJson(`public/context/${fileName}/${fileName}.json`);
+        json = await fs.promises.readFile(filePath, 'utf8');
+        json = JSON.parse(json);
     } catch (err) {
         console.error(`Failed to load JSON: ${err}`);
         return response.status(500).json({ error: 'Failed to load JSON' });
     }
-    for (let key in json) {
-        if (!json[key].hasOwnProperty('generatedResponse')) {
-            return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
+
+    try {
+        for (let key in json) {
+            if (!json[key].hasOwnProperty('generatedResponse')) {
+                console.log('generatedResponse does not exist in the JSON');
+                return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
+            }
+
+            const payload = {
+                prompt: json[key].generatedResponse,
+                voice: request.body.voice,
+            };
+            const fetchResponse = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!fetchResponse.ok) {
+                throw new Error(`HTTP error ${fetchResponse.status}`);
+            }
+
+            const contentType = fetchResponse.headers.get('content-type');
+            console.log('Received headers:', fetchResponse.headers);
+
+            if (contentType && contentType.includes('multipart/form-data')) {
+                const busboy = Busboy({ headers: { 'content-type': contentType } });
+                fetchResponse.body.pipe(busboy);
+                const saveFolder = path.join('public', 'context', fileName);
+
+                busboy.on('file', function (fieldname, file, info) {
+                    console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
+                    const saveTo = path.join(saveFolder, `${fileName}_${key}${path.extname(info.filename)}`);
+                    file.on('data', function (data) {
+                        console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
+                    });
+
+                    file.on('end', function () {
+                        console.log('File [' + fieldname + '] Finished');
+                    });
+
+                    file.pipe(fs.createWriteStream(saveTo));
+                });
+
+                busboy.on('field', function (fieldname, val, info) {
+                    console.log('Got ' + fieldname + '. Parsing to JSON');
+                    const newData = JSON.parse(val);
+                    for (let subKey in newData) {
+                        if (!json[key].subs) {
+                            json[key].subs = {};
+                        }
+                        json[key].subs[subKey] = newData[subKey];
+                    }
+                });
+
+                await new Promise((resolve, reject) => {
+                    busboy.on('close', () => {
+                        console.log(key + ' of ' + json.length + ' done.');
+                        resolve();
+                    });
+                    busboy.on('error', (err) => {
+                        console.log('Error occurred: ', err);
+                        reject(err);
+                    });
+                });
+            }
         }
-        try {
-            console.log(`Generating TTS for prompt #${key}:\n ${json[key].generatedResponse}`);
-            const fetchResponse = await requestTTS(json[key].generatedResponse, request.body.voice, request.body.settings)
 
-            const filePath = path.join('public', 'context', fileName, `${fileName}_${key}.wav`);
-
-            const streamPipeline = promisify(pipeline);
-            await streamPipeline(fetchResponse.body, fs.createWriteStream(filePath));
-
-            console.log('The file has been saved!\n');
-        } catch (error) {
-            console.error('Error:', error);
-            const status = error.status || 500;
-            return response.status(status).send(`An error occurred with status code: ${status}`);
-        }
+        // Write back the modified JSON to the original file after all modifications
+        await fs.promises.writeFile(filePath, JSON.stringify(json, null, 2));
+        console.log('Updated JSON saved.');
+        response.status(200).json({ message: 'TTS Complete', filepath: fileName });
+    } catch (error) {
+        console.error('Error during processing:', error);
+        response.status(500).send('An error occurred');
     }
-    console.log('All files have been saved!');
-    return response.status(200).json({ message: 'TTS Complete', filepath: fileName });
 });
 
 module.exports = { router };
