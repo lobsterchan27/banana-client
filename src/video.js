@@ -8,25 +8,22 @@ const fs = require("fs");
 const router = express.Router();
 
 router.post('/generate/ass', jsonParser, async function (req, res) {
-    const contextName = req.body.contextName
-    const contextPath = path.join(process.cwd(), "public", "context", contextName);
-    const jsonPath = path.join(contextPath, `${contextName}.json`);
-    const data = await loadJson(jsonPath);
-  
-    let  = 0;
-    const subtitles = Object.values(data)
-      .map(item => Object.values(item.subs))
-      .reduce((acc, val) => {
-        val.forEach(sub => {
-          sub.start
-          sub.end
-        });
-        return acc.concat(val);
-      }, []);
-    const assContent = generateASS(subtitles);
+  const contextName = req.body.contextName;
+  const contextPath = path.join(process.cwd(), "public", "context", contextName);
+  const jsonPath = path.join(contextPath, `${contextName}.json`);
+  const outputPath = path.join(contextPath, `${contextName}.ass`);
+  const data = await loadJson(jsonPath);
+
+  const subtitles = Object.values(data)
+    .map(item => Object.values(item.subs))
+    .reduce((acc, val) => acc.concat(val), []);
+
+  console.log(subtitles)
+
+  const assContent = generateASS(subtitles);
     
     // Write ASS content to a file
-    fs.writeFile('subtitles.ass', assContent, (err) => {
+    fs.writeFile(outputPath, assContent, (err) => {
       if (err) {
         console.error('Error writing to file:', err);
         res.status(500).send({ message: 'Error generating subtitles' });

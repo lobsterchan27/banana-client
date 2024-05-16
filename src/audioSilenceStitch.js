@@ -13,7 +13,7 @@ async function audioSilenceStitch(contextName) {
   let prevInfoDuration = 0;
   let ffmpegInputs = [];
   let concatFilter = [];
-  let streamIndex = 0;  // Initialize stream index
+  let streamIndex = 0;
   let silenceDurations = [];
 
   // creating ffmpeg command

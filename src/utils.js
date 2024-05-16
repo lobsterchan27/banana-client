@@ -193,6 +193,17 @@ async function loadJson(filename) {
   return JSON.parse(data);
 }
 
+/**
+ * Asynchronously saves an object as a JSON file.
+ *
+ * This function takes a JavaScript object and a file path, converts the object to a JSON string,
+ * and writes it to the specified file. If the file already exists, it will be overwritten.
+ *
+ * @param {string} path - The path where the JSON file will be saved.
+ * @param {Object} data - The JavaScript object to be saved as JSON.
+ * @returns {Promise<void>} A promise that resolves when the file has been successfully written.
+ * @throws {Error} If there is an error writing the file.
+ */
 async function saveJson(path, data) {
   return new Promise((resolve, reject) => {
     fs.writeFile(path, JSON.stringify(data, null, 2), 'utf8', function (err) {
@@ -262,6 +273,16 @@ async function createThumbnail(
   return resizedBase64Image;
 }
 
+/**
+ * Formats a timestamp given in seconds into a string in the format "HH:MM:SS.ss".
+ *
+ * This function takes a number of seconds, and returns a string representing that time
+ * in the format "HH:MM:SS.ss", where HH represents hours, MM represents minutes, SS represents
+ * integer seconds, and ss represents fractional seconds to two decimal places.
+ *
+ * @param {number} seconds - The number of seconds to format.
+ * @returns {string} A string representing the formatted timestamp.
+ */
 function formatTimestamp(seconds) {
     const hours = Math.floor(seconds / 3600)
       .toString()
@@ -276,14 +297,14 @@ function formatTimestamp(seconds) {
   }
 
   
-
+//STILL WORKING ON THIS FUNCTION
 /**
  * Generates an ASS (Advanced SubStation Alpha) subtitle file content from an array of subtitle objects.
  *
  * @param {Array} subtitles - An array of subtitle objects. Each object should have 'start', 'end', and 'text' properties.
  * @returns {string} The content of an ASS subtitle file.
  */
-function generateASS(subtitles) {
+function generateASS(subtitles) {  
   const header = `[Script Info]
 Title: Generated Subtitles
 ScriptType: v4.00+
@@ -300,12 +321,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
 
   let events = subtitles
     .map((sub) => {
-      return `Dialogue: 0,${formatTimestamp(sub.start)},${formatTimestamp(sub.end)},Default,,0,0,0,,${sub.text}`;
+      const formattedText = sub.words.map(word => `{\\c&H00FFFF00&}${word.word}{\\c}`).join(' ');
+      return `Dialogue: 0,${formatTimestamp(sub.start)},${formatTimestamp(sub.end)},Default,,0,0,0,,${formattedText}`;
     })
     .join("\n");
 
   return `${header}\n${events}`;
 }
+
 
 module.exports = {
   createAbortController,
