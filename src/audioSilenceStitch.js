@@ -21,7 +21,7 @@ async function audioSilenceStitch(contextName) {
     const entryTime = segment.segments[segment.segments.length - 1].end;
     const currentAudioFilePath = path.join(contextPath, `${contextName}_${key}.wav`);
     let info = await getAudioInfo(currentAudioFilePath);
-    const silenceDuration = Math.max(0, Math.floor(entryTime - prevEntryTime - prevInfoDuration));
+    const silenceDuration = Math.max(0, (entryTime - prevEntryTime - prevInfoDuration).toFixed(3));
     silenceDurations.push(silenceDuration);
 
     // Prepare FFmpeg command parts
@@ -41,12 +41,19 @@ async function audioSilenceStitch(contextName) {
 
   // update subs times
   let endTime = 0;
-  for (const [key, segment] of Object.entries(contextChunks)) {
-    const prevEndTime = updateSubTimes(segment.subs, silenceDurations[key], endTime);
-    console.log(prevEndTime)
-    endTime = prevEndTime;
+  const firstSubStart = Object.values(contextChunks)[0].subs[0].start;
+  console.log("firstSubStart", firstSubStart)
+  console.log("silenceDurations", silenceDurations[0])
+  if (firstSubStart < silenceDurations[0]) {
+    console.log("updating sub times")
+    for (const [key, segment] of Object.entries(contextChunks)) {
+      const prevEndTime = updateSubTimes(segment.subs, silenceDurations[key], endTime);
+      console.log(prevEndTime)
+      endTime = prevEndTime;  
+    }
+  } else {
+    console.log("subs already updated")
   }
-
   // Save the updated contextChunks back to the JSON file
   await saveJson(jsonPath, contextChunks);
 
