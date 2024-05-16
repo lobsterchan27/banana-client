@@ -13,19 +13,16 @@ router.post('/generate/ass', jsonParser, async function (req, res) {
     const jsonPath = path.join(contextPath, `${contextName}.json`);
     const data = await loadJson(jsonPath);
   
-    let cumulativeDuration = 0;
+    let  = 0;
     const subtitles = Object.values(data)
       .map(item => Object.values(item.subs))
       .reduce((acc, val) => {
         val.forEach(sub => {
-          sub.start += cumulativeDuration;
-          sub.end += cumulativeDuration;
+          sub.start
+          sub.end
         });
-        cumulativeDuration = val[val.length - 1].end;
         return acc.concat(val);
       }, []);
-    
-    console.log(subtitles);
     const assContent = generateASS(subtitles);
     
     // Write ASS content to a file
