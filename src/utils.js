@@ -1,6 +1,10 @@
 const fs = require("fs");
+const path = require("path");
 const sharp = require("sharp");
 const { Readable } = require("stream");
+const YtDlpWrap = require("yt-dlp-wrap").default;
+
+const { PROJECT_ROOT, YT_DLP_BINARY_PATH } = require("../settings");
 
 /**
  * Creates an AbortController for use with koboldcpp requests.
@@ -36,6 +40,32 @@ function createAbortController(request, response) {
     controller.abort();
   });
   return controller;
+}
+
+/**
+ * Checks for the yt-dlp binary at a predefined path and downloads it if not present.
+ * Logs the download status to the console. Uses yt-dlp-wrap to handle the download process.
+ */
+async function checkYtDlp() {
+  const binaryDir = path.join(PROJECT_ROOT, 'bin');
+  const binaryPath = path.join(YT_DLP_BINARY_PATH, 'yt-dlp.exe');
+
+  try {
+    // Ensure the directory exists
+    await fs.promises.mkdir(binaryDir, { recursive: true });
+
+    // Check if the binary exists
+    await fs.promises.access(binaryPath);
+    console.log('yt-dlp binary already exists.');
+  } catch (error) {
+    console.log('yt-dlp binary not found, downloading...');
+    try {
+      await YtDlpWrap.downloadFromGithub(binaryPath);
+      console.log('yt-dlp binary downloaded successfully.');
+    } catch (downloadError) {
+      console.error('Failed to download yt-dlp binary:', downloadError);
+    }
+  }
 }
 
 /**
@@ -237,6 +267,16 @@ function sanitizePath(originalPath) {
   return sanitizedPath;
 }
 
+function sanitizePathSegments(pathString) {
+  return path.join(...pathString.split(path.sep).map(segment => {
+      // Replace last period in each segment with '#'
+      segment = segment.replace(/\.(?=[^.]*$)/, '#');
+      // Remove other invalid end characters
+      segment = segment.replace(/[\\/:*?"<>|]$/, '').trim();
+      return segment;
+  }));
+}
+
 async function prepareImage(imagePath) {
   const imageBuffer = await fs.promises.readFile(imagePath);
   const maxSide = 1024;
@@ -284,19 +324,19 @@ async function createThumbnail(
  * @returns {string} A string representing the formatted timestamp.
  */
 function formatTimestamp(seconds) {
-    const hours = Math.floor(seconds / 3600)
-      .toString()
-      .padStart(1, '0');
-    const minutes = Math.floor((seconds % 3600) / 60)
-      .toString()
-      .padStart(2, '0');
-    const secs = (seconds % 60)
-      .toFixed(2)
-      .padStart(5, '0');
-    return `${hours}:${minutes}:${secs}`;
-  }
+  const hours = Math.floor(seconds / 3600)
+    .toString()
+    .padStart(1, '0');
+  const minutes = Math.floor((seconds % 3600) / 60)
+    .toString()
+    .padStart(2, '0');
+  const secs = (seconds % 60)
+    .toFixed(2)
+    .padStart(5, '0');
+  return `${hours}:${minutes}:${secs}`;
+}
 
-  
+
 //STILL WORKING ON THIS FUNCTION
 /**
  * Generates an ASS (Advanced SubStation Alpha) subtitle file content from an array of subtitle objects.
@@ -304,7 +344,7 @@ function formatTimestamp(seconds) {
  * @param {Array} subtitles - An array of subtitle objects. Each object should have 'start', 'end', and 'text' properties.
  * @returns {string} The content of an ASS subtitle file.
  */
-function generateASS(subtitles) {  
+function generateASS(subtitles) {
   const header = `[Script Info]
 Title: Generated Subtitles
 ScriptType: v4.00+
@@ -332,6 +372,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
 
 module.exports = {
   createAbortController,
+  checkYtDlp,
   extractData,
   handleStream,
   forwardFetchResponse,
@@ -341,6 +382,7 @@ module.exports = {
   saveJson,
   delay,
   sanitizePath,
+  sanitizePathSegments,
   prepareImage,
   generateASS,
 };
