@@ -212,6 +212,12 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
 
                     file.on('end', function () {
                         console.log('File [' + fieldname + '] Finished');
+                        console.log(saveTo);
+                        if (!json[key]) {
+                            json[key] = {};
+                        }
+                        // Assign the filename directly to json[key].text2speech
+                        json[key].text2speech = `${fileName}_${key}${path.extname(info.filename)}`;
                     });
 
                     file.pipe(fs.createWriteStream(saveTo));
@@ -243,7 +249,7 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
 
         // Write back the modified JSON to the original file after all modifications
         await fs.promises.writeFile(filePath, JSON.stringify(json, null, 2));
-        console.log('Updated JSON saved.');
+        console.log('Updated JSON saved.' + filePath);
         response.status(200).json({ message: 'TTS Complete', filepath: fileName });
     } catch (error) {
         console.error('Error during processing:', error);
