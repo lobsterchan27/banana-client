@@ -2,9 +2,10 @@ const path = require("path");
 const wavFileInfo = require("wav-file-info");
 const { loadJson, saveJson } = require("./utils");
 const { exec } = require('child_process');
+const { PROJECT_ROOT } = require("../settings");
 
 async function audioSilenceStitch(contextName) {
-  const contextPath = path.join(process.cwd(), "public", "context", contextName);
+  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
   const jsonPath = path.join(contextPath, `${contextName}.json`);
   const contextChunks = await loadJson(jsonPath);
   const outputFile = path.join(contextPath, `${contextName}_final_output.wav`);

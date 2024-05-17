@@ -5,11 +5,13 @@ const { jsonParser } = require("./common");
 const { generateASS, loadJson } = require("./utils");
 const fs = require("fs");
 
+const { PROJECT_ROOT } = require("../settings");
+
 const router = express.Router();
 
 router.post('/generate/ass', jsonParser, async function (req, res) {
   const contextName = req.body.contextName;
-  const contextPath = path.join(process.cwd(), "public", "context", contextName);
+  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
   const jsonPath = path.join(contextPath, `${contextName}.json`);
   const outputPath = path.join(contextPath, `${contextName}.ass`);
   const data = await loadJson(jsonPath);
@@ -36,7 +38,7 @@ router.post('/generate/ass', jsonParser, async function (req, res) {
 
 router.post("/processVideo", async function (request, response) {
   const contextName = await request.body.contextName;
-  const contextPath = path.join(process.cwd(), "public", "context", contextName);
+  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
 
   console.log("Processing Video:");
   const files = {

@@ -3,6 +3,7 @@ const router = express.Router();
 const { jsonParser, checkRequestBody } = require('./common');
 const fs = require('fs');
 const path = require('path');
+const { PROJECT_ROOT } = require("../settings");
 
 
 async function getFolderStructure(dirPath) {
@@ -19,7 +20,7 @@ async function getFolderStructure(dirPath) {
  */
 router.get('/context-folders', jsonParser, checkRequestBody, async (request, response) => {
     try {
-        const contextDir = path.join(process.cwd(), 'public', 'context');
+        const contextDir = path.join(PROJECT_ROOT, 'public', 'context');
 
         const folderStructure = await getFolderStructure(contextDir);
         response.json(folderStructure);
