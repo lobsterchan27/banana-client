@@ -337,7 +337,6 @@ function formatTimestamp(seconds) {
 }
 
 
-//STILL WORKING ON THIS FUNCTION
 /**
  * Generates an ASS (Advanced SubStation Alpha) subtitle file content from an array of subtitle objects.
  *
@@ -361,8 +360,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`
 
   let events = subtitles
     .map((sub) => {
-      const formattedText = sub.words.map(word => `{\\c&H00FFFF00&}${word.word}{\\c}`).join(' ');
-      return `Dialogue: 0,${formatTimestamp(sub.start)},${formatTimestamp(sub.end)},Default,,0,0,0,,${formattedText}`;
+      return `Dialogue: 0,${formatTimestamp(sub.start)},${formatTimestamp(sub.end)},Default,,0,0,0,,${sub.text}`;
     })
     .join("\n");
 
