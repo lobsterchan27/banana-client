@@ -9,7 +9,7 @@ const { PROJECT_ROOT } = require("../settings");
 
 const router = express.Router();
 
-router.post('/generate/ass', jsonParser, async function (req, res) {
+router.post('/generate/subs', jsonParser, async function (req, res) {
   const contextName = req.body.contextName;
   const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
   const jsonPath = path.join(contextPath, `${contextName}.json`);
@@ -19,8 +19,6 @@ router.post('/generate/ass', jsonParser, async function (req, res) {
   const subtitles = Object.values(data)
     .map(item => Object.values(item.subs))
     .reduce((acc, val) => acc.concat(val), []);
-
-  console.log(subtitles)
 
   const assContent = generateASS(subtitles);
     

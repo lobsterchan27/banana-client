@@ -560,12 +560,12 @@ function combineAudio(contextName) {
 }
 
 function generateSubs(contextName) {
-    fetch('/audio/generate/subs', {
+    fetch('/video/generate/subs', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(contextName)
+        body: JSON.stringify({ contextName })
     })
         .then(response => response.json())
         .then(data => console.log('Response:', data))
