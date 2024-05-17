@@ -148,12 +148,12 @@
             <p id="chat-display"></p>
 
             <div class="input-group">
-                <textarea id="prompt" wrap="soft" rows="2" placeholder="Enter your prompt here"></textarea>
+                <textarea id="prompt-input" wrap="soft" rows="2" placeholder="Enter your prompt here"></textarea>
                 <input type="file" id="image-input" style="display: none;" accept="image/*">
                 <div id="button-group">
                     <button id="generate-text-button">Generate Text</button>
-                    <button id="upload-image">Upload Image</button>
-                    <button id="clear-chat">Clear Chat</button>
+                    <button id="upload-image-button">Upload Image</button>
+                    <button id="clear-chat-button">Clear Chat</button>
                 </div>
             </div>
 
@@ -168,14 +168,17 @@
                 <input type="text" id="transcribe-url" placeholder="Enter URL to transcribe"
                     value="https://www.youtube.com/shorts/4HnGbQ-vi8s">
 
+                <button id="download-video-button">Download Video</button>
                 <button id="transcribe-url-button">Transcribe URL</button>
             </div>
 
             <div class="input-group">
                 <select id="context-input"></select>
                 <div id="button-group">
-                    <button id="process-context-button">processContext</button>
-                    <button id="context-tts-button">contextTTS</button>
+                    <button id="process-context-button">process Context</button>
+                    <button id="context-tts-button">context TTS</button>
+                    <button id="combine-audio-button">Combine Audio</button>
+                    <button id="generate-subs-button">Generate Subs</button>
                 </div>
             </div>
         </div>
