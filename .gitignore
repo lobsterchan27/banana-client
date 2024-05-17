@@ -133,3 +133,4 @@ dist
 .history/
 public/context/*
 public/tts/*
+bin/*
