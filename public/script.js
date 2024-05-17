@@ -167,6 +167,26 @@ async function transcribeUrl(args) {
 }
 
 /**
+ * Takes youtube URL and downloads the video to context folder with the same name as the video.
+ * 
+ * @param {Object} args - The arguments for the transcription.
+ * @param {string} args.url - The URL to transcribe.
+ */
+async function downloadVideo(args) {
+    const payload ={
+        url: args
+    }
+
+    fetch('/youtube/download', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+}
+
+/**
  * Generates text using the provided arguments.
  * @param {Object} args - An object containing the arguments for text generation.
  * @param {string} args.prompt - The prompt to use for text generation.
@@ -426,10 +446,16 @@ function handleTextToSpeechButtonClick() {
     text2speech({ prompt, settings: { api_server } });
 }
 
+function handleDownloadVideoButtonClick() {
+    const url = document.getElementById('transcribe-url').value;
+    downloadVideo(url);
+}
+
 function handleTranscribeUrlButtonClick() {
     const api_server = document.getElementById('banana-api-server').value;
     const url = document.getElementById('transcribe-url').value;
     transcribeUrl({ api_server, url, minimum_interval: 2 });
+    getFolders();
 }
 
 function handleProcessContextButtonClick() {
@@ -443,6 +469,16 @@ function handleContextTTSButtonClick() {
     const api_server = document.getElementById('banana-api-server').value;
     const context = document.getElementById('context-input').value;
     contextTTS({ context, settings: { api_server } });
+}
+
+function handleCombineAudioButtonClick() {
+    const contextName = document.getElementById('context-input').value;
+    combineAudio(contextName);
+}
+
+function handleGenerateSubsButtonClick() {
+    const contextName = document.getElementById('context-input').value;
+    generateSubs(contextName);
 }
 
 function clearChat() {
@@ -506,55 +542,88 @@ function collectSliderSettings() {
     return settings;
 }
 
+/**
+ * Combines the audio files in the specified context folder.
+ * @param {string} contextName - The name of the folder containing the audio files to combine.
+ */
+function combineAudio(contextName) {
+    fetch('/audio/generate/final', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ contextName })
+    })
+        .then(response => response.json())
+        .then(data => console.log('Response:', data))
+        .catch(error => console.error('Error:', error));
+}
+
+function generateSubs(contextName) {
+    fetch('/audio/generate/subs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(contextName)
+    })
+        .then(response => response.json())
+        .then(data => console.log('Response:', data))
+        .catch(error => console.error('Error:', error));
+}
+
 //On page load
 document.addEventListener('DOMContentLoaded', function () {
-    enableAutoResize('prompt');
+    enableAutoResize('prompt-input');
     enableAutoResize('permanent-prompt');
     loadSliders();
     getFolders();
 });
 
-// Attach event handlers
-document.getElementById('generate-text-button').addEventListener('click', () => {
+// Attach event handlers and button click listeners
+function handleGenerateTextButtonClick() {
     const api_server = document.getElementById('kobold-api-server').value;
     const permanentPrompt = document.getElementById('permanent-prompt').value;
-    const promptInput = document.getElementById('prompt').value;
-
-    // Get the user and character names from the input fields
+    const promptInput = document.getElementById('prompt-input');
     const userName = document.getElementById('user-input').value;
     const characterName = document.getElementById('character-name-input').value;
+    const chatDisplay = document.getElementById('chat-display');
 
-    //stop sequence
-    const stop_sequence = [];
-    stop_sequence.push('\n' + userName + ':');
-    stop_sequence.push(document.getElementById('stop-sequence-input').value);
+    const stop_sequence = [
+        '\n' + userName + ':',
+        document.getElementById('stop-sequence-input').value
+    ];
 
     // Display user's input
     const userMessage = document.createElement('div');
     userMessage.className = 'chat-message user';
-    userMessage.innerHTML = `<strong>${userName}:</strong> ${promptInput}`;
-    document.getElementById('chat-display').appendChild(userMessage);
+    userMessage.innerHTML = `<strong>${userName}:</strong> ${promptInput.value}`;
+    chatDisplay.appendChild(userMessage);
     scrollToBottom();
 
     // Create div for AI's response
     const aiMessage = document.createElement('div');
     aiMessage.className = 'chat-message ai';
     aiMessage.innerHTML = `<strong>${characterName}:</strong> <span class="ellipsis">...</span>`;
-    document.getElementById('chat-display').appendChild(aiMessage);
+    chatDisplay.appendChild(aiMessage);
     scrollToBottom();
 
-    chatHistory.push({ role: 'user', message: promptInput });
+    // Update chat history
+    chatHistory.push({ role: 'user', message: promptInput.value });
+
+    // Construct full prompt
     const prompt = constructFullPrompt(permanentPrompt, chatHistory, userName, characterName);
 
+    // Collect slider settings
     const settings = collectSliderSettings();
     settings.api_server = api_server;
     settings.stop_sequence = stop_sequence;
     settings.streaming = true;
 
+    // Generate text and update AI's response
     textGenerate({ prompt, settings }, function (chunk) {
         if (chunk === ' ') { chunk = '&nbsp;'; }
 
-        // Update AI's response
         if (aiMessage.querySelector('.ellipsis')) {
             aiMessage.innerHTML = `<strong>${characterName}:</strong> ${chunk}`;
         } else {
@@ -563,12 +632,14 @@ document.getElementById('generate-text-button').addEventListener('click', () => 
         scrollToBottom();
     });
 
-    document.getElementById('prompt').value = '';
-});
+    promptInput.value = '';
+}
 
-// document.getElementById('generate-text-button').addEventListener('click', handleGenerateButtonClick);
+document.getElementById('generate-text-button').addEventListener('click', handleGenerateTextButtonClick);
 
 document.getElementById('text-2-speech-button').addEventListener('click', handleTextToSpeechButtonClick);
+
+document.getElementById('download-video-button').addEventListener('click', handleDownloadVideoButtonClick);
 
 document.getElementById('transcribe-url-button').addEventListener('click', handleTranscribeUrlButtonClick);
 
@@ -576,15 +647,19 @@ document.getElementById('process-context-button').addEventListener('click', hand
 
 document.getElementById('context-tts-button').addEventListener('click', handleContextTTSButtonClick);
 
-document.getElementById('clear-chat').addEventListener('click', clearChat);
+document.getElementById('combine-audio-button').addEventListener('click', handleCombineAudioButtonClick);
 
-document.getElementById('prompt').addEventListener('keydown', handlePromptKeydown);
+document.getElementById('generate-subs-button').addEventListener('click', handleGenerateSubsButtonClick);
+
+document.getElementById('clear-chat-button').addEventListener('click', clearChat);
+
+document.getElementById('prompt-input').addEventListener('keydown', handlePromptKeydown);
 
 document.querySelectorAll('.dropdown-button').forEach(function (button) {
     button.addEventListener('click', handleDropdownButtonClick);
 });
 
 //Image Input
-document.getElementById('upload-image').addEventListener('click', handleUploadImageClick);
+document.getElementById('upload-image-button').addEventListener('click', handleUploadImageClick);
 
 document.getElementById('image-input').addEventListener('change', handleImageInputChange);
