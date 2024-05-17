@@ -21,7 +21,8 @@
     "node-fetch": "^2.7.0",
     "sharp": "^0.33.3",
     "text-encoding": "^0.7.0",
-    "wav-file-info": "^0.0.10"
+    "wav-file-info": "^0.0.10",
+    "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
