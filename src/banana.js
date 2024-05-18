@@ -50,12 +50,9 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
         if (contentType && contentType.includes('multipart/form-data')) {
             const busboy = Busboy({ headers: { 'content-type': contentType } });
             fetchResponse.body.pipe(busboy);
+            const combinedData = {};
             const base_filename = fetchResponse.headers.get('Base-Filename');
             const saveFolder = sanitizePathSegments(path.join('public', 'context', base_filename));
-
-            await fs.promises.mkdir(saveFolder, { recursive: true })
-                .then(() => console.log(`Directory created at ${saveFolder}`))
-                .catch(err => console.error('Error creating directory:', err));
 
             busboy.on('file', async function (fieldname, file, info) {
                 console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
@@ -64,17 +61,12 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
                 const saveTo = path.join(saveFolder, info.filename);
                 file.pipe(fs.createWriteStream(saveTo));
 
-                file.on('data', function (data) {
-                    // console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
-                });
-
                 file.on('end', function () {
                     console.log('File [' + fieldname + '] Finished');
                 });
             });
 
-            const combinedData = {};
-            busboy.on('field', function (fieldname, val, info) {
+            busboy.on('field', async function (fieldname, val, info) {
                 console.log('Field [' + fieldname + ']: ' + val.substring(0, 30));
                 const data = JSON.parse(val);
 
@@ -88,7 +80,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
                     }
                 } else {
                     // Write JSON data to a file with the fieldname as the filename
-                    fs.promises.writeFile(saveFolder, `${fieldname}`, JSON.stringify(data, null, 2))
+                    fs.promises.writeFile(path.join(saveFolder, `${fieldname}`), JSON.stringify(data, null, 2))
                         .then(() => console.log(`Data written to ${fieldname}`))
                         .catch(err => console.error('Error writing file:', err));
                 }
@@ -96,7 +88,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 
             busboy.on('close', async function () {
                 console.log('Done parsing form!');
-                const saveTo = path.join(saveFolder, fetchResponse.headers.get('Base-Filename'));
+                const saveTo = path.join(saveFolder, `${fetchResponse.headers.get('Base-Filename')}.json`);
 
                 try {
                     await fs.promises.writeFile(saveTo, JSON.stringify(combinedData, null, 2));
@@ -206,9 +198,9 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                 busboy.on('file', function (fieldname, file, info) {
                     console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
                     const saveTo = path.join(saveFolder, `${fileName}_${key}${path.extname(info.filename)}`);
-                    file.on('data', function (data) {
-                        console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
-                    });
+                    // file.on('data', function (data) {
+                    //     console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
+                    // });
 
                     file.on('end', function () {
                         console.log('File [' + fieldname + '] Finished');
