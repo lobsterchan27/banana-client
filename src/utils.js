@@ -336,14 +336,14 @@ function formatTimestamp(seconds) {
   return `${hours}:${minutes}:${secs}`;
 }
 
-
 /**
  * Generates an ASS (Advanced SubStation Alpha) subtitle file content from an array of subtitle objects.
  *
- * @param {Array} subtitles - An array of subtitle objects. Each object should have 'start', 'end', and 'text' properties.
+ * @param {Array} subtitles - An array of subtitle objects. Each object should have 'start', 'end', 'text', and 'words' properties.
+ * @param {string} mode - The display mode for the subtitles ('reveal' or 'grow').
  * @returns {string} The content of an ASS subtitle file.
  */
-function generateASS(subtitles) {
+function generateASS(subtitles, mode) {
   const header = `[Script Info]
 Title: Generated Subtitles
 ScriptType: v4.00+
@@ -359,13 +359,40 @@ Style: Default, Arial, 24, &H00FFFFFF, &H000000FF, &H00000000, &H00000000, 0, 0,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
 
   let events = subtitles
-    .map((sub) => {
-      return `Dialogue: 0,${formatTimestamp(sub.start)},${formatTimestamp(sub.end)},Default,,0,0,0,,${sub.text}`;
+    .flatMap((sub) => {
+      return generateDialogueEntries(sub, mode);
     })
     .join("\n");
 
   return `${header}\n${events}`;
 }
+
+/**
+ * Generates dialogue entries for a single subtitle object.
+ *
+ * @param {Object} subtitle - A subtitle object with 'start', 'end', 'text', and 'words' properties.
+ * @returns {Array} An array of dialogue strings for the subtitle.
+ */
+function generateDialogueEntries(subtitle) {
+  const { start, end, text, words } = subtitle;
+  let dialogues = [];
+  let previousEnd = start;
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const visibleText = words.slice(0, i + 1).map(w => w.word).join(' ');
+    const hiddenText = words.slice(i + 1).map(w => `{\\alpha&HFF&${w.word}}`).join(' ');
+    const dialogueText = `${visibleText} ${hiddenText}`.trim();
+    
+    dialogues.push(`Dialogue: 0,${formatTimestamp(previousEnd)},${formatTimestamp(word.end)},Default,,0,0,0,,${dialogueText}`);
+    previousEnd = word.end;
+  }
+
+  dialogues.push(`Dialogue: 0,${formatTimestamp(previousEnd)},${formatTimestamp(end)},Default,,0,0,0,,${text}`);
+
+  return dialogues;
+}
+
 
 
 module.exports = {
