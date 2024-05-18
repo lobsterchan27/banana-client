@@ -50,26 +50,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // document.getElementById('generate-text-button').addEventListener('click', handleGenerateTextButtonClick);
-
-    // document.getElementById('text-2-speech-button').addEventListener('click', handleTextToSpeechButtonClick);
-
-    // document.getElementById('download-video-button').addEventListener('click', handleDownloadVideoButtonClick);
-
-    // document.getElementById('transcribe-url-button').addEventListener('click', handleTranscribeUrlButtonClick);
-
-    // document.getElementById('process-context-button').addEventListener('click', handleProcessContextButtonClick);
-
-    // document.getElementById('context-tts-button').addEventListener('click', handleContextTTSButtonClick);
-
-    // document.getElementById('combine-audio-button').addEventListener('click', handleCombineAudioButtonClick);
-
-    // document.getElementById('generate-subs-button').addEventListener('click', handleGenerateSubsButtonClick);
-
-    // document.getElementById('clear-chat-button').addEventListener('click', handleClearChat);
-
-    // document.getElementById('prompt-input').addEventListener('keydown', handlePromptKeydown);
-
     document.querySelectorAll('.dropdown-button').forEach(function (button) {
         button.addEventListener('click', handlers.handleDropdownButtonClick);
     });
