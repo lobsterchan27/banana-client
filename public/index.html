@@ -120,7 +120,8 @@
 
             <div class="input-group">
                 <label for="permanent-prompt">Permanent Prompt:</label>
-                <textarea id="permanent-prompt" wrap="soft" rows="4" placeholder="Enter your permanent prompt here"></textarea>
+                <textarea id="permanent-prompt" wrap="soft" rows="4"
+                    placeholder="Enter your permanent prompt here"></textarea>
             </div>
 
             <div class="input-group">
@@ -161,15 +162,19 @@
                 <label for="tts-prompt">Text to Speech</label>
                 <input type="text" id="tts-prompt" placeholder="Enter text to speech here">
 
-                <button id="text-2-speech-button">Text to Speech</button>
+                <div id="button-group">
+                    <button id="text-2-speech-button">Text to Speech</button>
+                </div>
             </div>
 
             <div class="input-group">
                 <input type="text" id="transcribe-url" placeholder="Enter URL to transcribe"
                     value="https://www.youtube.com/shorts/4HnGbQ-vi8s">
 
-                <button id="download-video-button">Download Video</button>
-                <button id="transcribe-url-button">Transcribe URL</button>
+                <div id="button-group">
+                    <button id="download-video-button">Download Video</button>
+                    <button id="transcribe-url-button">Transcribe URL</button>
+                </div>
             </div>
 
             <div class="input-group">
@@ -181,6 +186,17 @@
                     <button id="generate-subs-button">Generate Subs</button>
                 </div>
             </div>
+
+            <!-- Processing Indicator -->
+            <div id="processing-indicator" class="indicator">
+                <p>Processing...</p>
+            </div>
+
+            <!-- Completion Indicator -->
+            <div id="completion-indicator" class="indicator" style="display: none;">
+                <p>Request Completed</p>
+            </div>
+
         </div>
         <div class="sidebar"></div>
     </div>
