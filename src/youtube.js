@@ -19,14 +19,17 @@ router.post('/download', jsonParser, async function (request, response) {
         '-o', outputPath,
         '--restrict-filenames',
         '--write-info-json',
+        '--no-overwrites'
     ];
 
     // Execute download
     try {
         const result = await ytDlpWrap.execPromise(options);
-        console.log('Download result:', result);
+        console.log(result);
+
         const downloadedFile = parseFilenameFromResult(result);
         console.log('Downloaded file:', downloadedFile);
+
         response.json({ filename: downloadedFile });
     } catch (error) {
         console.error('Download failed:', error);
@@ -35,8 +38,18 @@ router.post('/download', jsonParser, async function (request, response) {
 });
 
 function parseFilenameFromResult(result) {
-    const destinationLine = result.split('\n').find(line => line.includes('[download] Destination:'));
-    return destinationLine ? destinationLine.split('Destination: ')[1].trim() : null;
+    let destinationLine = result.split('\n').find(line => line.includes('[download] Destination:'));
+    
+    if (!destinationLine) {
+        destinationLine = result.split('\n').find(line => line.includes('has already been downloaded'));
+    }
+
+    if (destinationLine) {
+        const parts = destinationLine.split(' ');
+        return parts.slice(1, parts.length - 5).join(' ').trim();
+    }
+
+    return null;
 }
 
 
