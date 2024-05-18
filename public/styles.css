@@ -247,3 +247,22 @@ input[type="text"] {
 .slider-container input[type="number"]:focus {
     outline: none;
 }
+
+.indicator {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+#processing-indicator {
+    display: none; /* Initially hidden */
+}
+
+#completion-indicator {
+    display: none; /* Initially hidden */
+}
