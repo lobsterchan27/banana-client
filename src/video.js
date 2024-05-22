@@ -34,7 +34,7 @@ router.post('/generate/subs', jsonParser, async function (req, res) {
     });
   });
 
-router.post("/processVideo", async function (request, response) {
+router.post("/processvideo", async function (request, response) {
   const contextName = await request.body.contextName;
   const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
 
@@ -47,8 +47,35 @@ router.post("/processVideo", async function (request, response) {
   };
   const outputVideo = await processVideo(files);
   response.json({ outputVideo });
-
-  
 });
+
+router.post("/live2d"), jsonParser, async function(request, response) {
+
+
+}
+
+async function live2d(audioPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    // Path to your C++ executable
+    const exePath = path.resolve(PROJECT_ROOT, 'live2d', 'live2d.exe');
+
+    // Command-line arguments for the C++ executable
+    const args = [audioPath, outputPath];
+
+    // Execute the C++ program
+    execFile(exePath, args, (error, stdout, stderr) => {
+      if (error) {
+        console.error('Error executing C++ program:', error);
+        reject(error);
+        return;
+      }
+      if (stderr) {
+        console.error('C++ program stderr:', stderr);
+      }
+      console.log('C++ program stdout:', stdout);
+      resolve(outputPath);
+    });
+  });
+}
 
 module.exports = { router };
