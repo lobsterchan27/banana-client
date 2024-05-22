@@ -10,6 +10,7 @@ const {
     loadJson,
     handleStream,
     prepareImage,
+    cutOffUnfinishedSentences,
 } = require('./utils');
 const fs = require('fs');
 
@@ -36,7 +37,8 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     const permanentPrompt = `### Instruction:` + lb +
         `Write ${char}'s next reply in a fictional roleplay where ${char} is watching the video and reacting to it. Use the context from both the image and the audio to make comments. Avoid repetition, don't loop.` + lb +
         `The image is a chronological storyboard of frames from the video. Audio transcription will be provided as well.` + lb +
-        `Use the provided character sheet and example dialogue for formatting direction and character speech patterns.` + lb + lb +
+        `Use the provided character sheet and example dialogue for formatting direction and character speech patterns.` + lb + 
+        `Respond concisely, use 2 to 3 sentences. Give attention to what you see as well as to what is said which will be marked Video Audio:` + lb + lb +
         `Description of ${char}:` + lb +
         `${char}'s Appearance: Warm, inviting smile that lights up her face.` + lb +
         `Warm, deep brown eyes with long lashes that give a naturally endearing look` + lb +
@@ -53,8 +55,9 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         `Witty and playful, with a mischievous sense of humor` + lb +
         `Unapologetically authentic and comfortable in her own skin` + lb +
         `Passionate about her interests, yet laidback in her approach` + lb +
-        `Radiates an effortless grace and poise that draws others in` + lb + lb +
-        // `Sultry, Relaxed, Witty, Authentic, Passionate, Graceful, Unapproachable, Confident ,Mysterious`
+        `Radiates an effortless grace and poise that draws others in` + lb +
+        `${char} is a little bit unhinged, cute and sexy. She understands internet culture.` + lb +
+        `${char} uses informal speech and slang, but is also articulate and well-spoken when she wants to be.` + lb +
         `Scenario Backstory:` + lb +
         `${char} is a popular content creator known for her reaction videos. She has a loyal following who love her genuine and engaging personality.` + lb + lb +
         `Scenario: The image is a chronological storyboard of frames from the video. Accompanying audio transcription to the video with be marked with Video Audio:` + lb + lb +
@@ -63,7 +66,6 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         `${char}: Ok, let's see what we have here. I'm excited to see what's in store for us today!`;
 
     const history = [];
-
 
     console.log('Received Kobold context generation request:', request.body);
     const fileName = request.body.context;
@@ -82,6 +84,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
     const lastKey = keys[keys.length - 1];
 
     for (let key in json) {
+
         // if (json[key].hasOwnProperty('generatedResponse')) {
         //     console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
         //     continue;
@@ -91,7 +94,8 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
 
         let concatenatedText = audiolabel + json[key].segments.map(segment => segment.text).join(' ');
         if (key === lastKey) {
-            concatenatedText = "System: This is the last part of the video. Let's give our viewers a good closer.\n" + concatenatedText;
+            concatenatedText = "[System: This is the last part of the video. Let's give our viewers a good closer.]\n" + concatenatedText;
+            request.body.settings.max_length = 200;
         }
 
         //temp hack full prompt
@@ -99,7 +103,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         const fullPrompt = permanentPrompt + history.map(item => (item.role === 'user' ? userToken : assistantToken) + item.message) + assistantToken;
 
         try {
-            console.log(`Image: ${imagefile}\nPrompt: ${concatenatedText}\n`);
+            console.log(`\nImage: ${imagefile}\nPrompt: ${concatenatedText}\n`);
             const imageLocation = path.join('public', 'context', fileName, imagefile);
             const images = [await prepareImage(imageLocation)];
 
@@ -117,7 +121,14 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
                 // const data = fullResponse.results[0].text;
 
                 //temp clean response
-                const data = fullResponse.results[0].text.replace(/###/g, '').replace(/\n\n$/g, '').replace(/,/g, '').trim();
+                let data = fullResponse.results[0].text.replace(/###/g, '').replace(/\n\n$/g, '').replace(/,/g, '').trim();
+
+                data = cutOffUnfinishedSentences(data);
+
+                if (data.startsWith(char + ": ")) {
+                    data = data.substring((char + ": ").length);
+                }
+
                 console.log(data);
 
                 json[key].generatedResponse = data;
