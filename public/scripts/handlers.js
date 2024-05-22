@@ -103,7 +103,11 @@ function handleProcessContextButtonClick(event, processingIndicator, completionI
     const api_server = document.getElementById('kobold-api-server').value;
     const selectElement = document.getElementById('context-input');
     const context = selectElement.options[selectElement.selectedIndex].text;
-    processContext({ settings: { api_server, streaming: false }, context })
+    const settings = collectSliderSettings();
+    settings.api_server = api_server;
+    settings.streaming = false;
+
+    processContext({ settings, context })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
