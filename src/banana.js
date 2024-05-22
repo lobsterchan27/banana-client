@@ -8,6 +8,7 @@ const { pipeline } = require('stream');
 const { promisify } = require('util');
 const { requestTTS, loadJson, sanitizePathSegments } = require('./utils');
 const Busboy = require('busboy');
+const { API_KEY } = require('../settings');
 
 const router = express.Router();
 
@@ -38,7 +39,10 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
         const fetchResponse = await fetch(url, {
             method: 'POST',
             body: form,
-            headers: form.getHeaders()
+            headers: {
+                ...form.getHeaders(),
+                'Authorization': `Bearer ${API_KEY}`
+            }
         });
 
         if (!fetchResponse.ok) {
@@ -180,7 +184,10 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
             const fetchResponse = await fetch(url, {
                 method: 'POST',
                 body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'application/json' }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${API_KEY}`
+                }
             });
 
             if (!fetchResponse.ok) {
