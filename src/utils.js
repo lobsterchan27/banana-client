@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 const { Readable } = require("stream");
+const { API_KEY } = require('../settings');
 const YtDlpWrap = require("yt-dlp-wrap").default;
 
 const { PROJECT_ROOT, YT_DLP_BINARY_PATH } = require("../settings");
@@ -171,7 +172,10 @@ async function requestTTS(prompt, voice, settings) {
     fetchResponse = await fetch(url, {
       method: "POST",
       body: JSON.stringify(payload),
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        'Authorization': 'Bearer ' + API_KEY,
+       },
     });
   } catch (error) {
     console.error(`Error during fetch: ${error.message}`);
@@ -393,7 +397,16 @@ function generateDialogueEntries(subtitle) {
   return dialogues;
 }
 
-
+// Function to cut off unfinished sentences from the end
+function cutOffUnfinishedSentences(text) {
+  // Find the last occurrence of any sentence-ending punctuation
+  for (let i = text.length - 1; i >= 0; i--) {
+      if (".!?".includes(text[i])) {
+          return text.substring(0, i + 1).trim();
+      }
+  }
+  return text;  // Return the original text if no punctuation is found
+}
 
 module.exports = {
   createAbortController,
@@ -410,4 +423,5 @@ module.exports = {
   sanitizePathSegments,
   prepareImage,
   generateASS,
+  cutOffUnfinishedSentences,
 };
