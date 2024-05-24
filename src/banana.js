@@ -150,10 +150,13 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
  * This function handles POST requests to the '/text2speech/' endpoint.
  * 
  * @param {Object} request - The request object, expected to contain a body with 'api_server', 'prompt', and optionally 'voice'.
- * @param {string} request.body.context - The foldername containing the JSON and other related context files.
- * @param {string} request.body.voice - The voice to use for the speech.
+ * @param {String} request.body.context - The foldername containing the JSON and other related context files.
+ * @param {String} request.body.voice - The voice to use for the speech.
+ * @param {String} request.body.backend - The backend to use for the speech.
+ * @param {Boolean} request.body.voicefix - Whether to use voicefix.
+ * @param {Boolean} request.body.vc - Whether to use VC.
  * @param {Object} request.body.settings - The settings to use for text to speech.
- * @param {string} request.body.settings.api_server - The API server to use for text to speech.
+ * @param {String} request.body.settings.api_server - The API server to use for text to speech.
  */
 router.post('/text2speech/context', jsonParser, async function (request, response) {
     const url = request.body.settings.api_server + '/text2speech/align';
@@ -180,6 +183,9 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
             const payload = {
                 prompt: json[key].generatedResponse,
                 voice: request.body.voice,
+                backend: request.body.backend,
+                voicefix: request.body.voicefix,
+                vc: request.body.vc,
             };
             const fetchResponse = await fetch(url, {
                 method: 'POST',

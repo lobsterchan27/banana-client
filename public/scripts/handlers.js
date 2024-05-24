@@ -104,6 +104,7 @@ function handleProcessContextButtonClick(event, processingIndicator, completionI
     const selectElement = document.getElementById('context-input');
     const context = selectElement.options[selectElement.selectedIndex].text;
     const settings = collectSliderSettings();
+
     settings.api_server = api_server;
     settings.streaming = false;
 
@@ -116,7 +117,12 @@ function handleContextTTSButtonClick(event, processingIndicator, completionIndic
 
     const api_server = document.getElementById('banana-api-server').value;
     const context = document.getElementById('context-input').value;
-    contextTTS({ context, settings: { api_server } })
+    const voice = 'sky'
+    const backend = 'tortoise'
+    const voicefix = true
+    const vc = true
+
+    contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
