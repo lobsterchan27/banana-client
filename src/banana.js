@@ -179,6 +179,14 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                 console.log('generatedResponse does not exist in the JSON');
                 return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
             }
+            try {
+                audioFilePath = path.join('public', 'context', fileName, `${fileName}_${key}.wav`);
+                await fs.promises.access(audioFilePath, fs.constants.F_OK);
+                console.log(`File exists: ${audioFilePath}, skipping...`);
+                continue; // Skip the rest of the current loop iteration
+            } catch (fileError) {
+                console.log(`File does not exist: ${audioFilePath}, processing...`);
+            }
 
             const payload = {
                 prompt: json[key].generatedResponse,
