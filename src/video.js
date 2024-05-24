@@ -2,7 +2,8 @@ const express = require("express");
 const path = require("path");
 const { processVideo } = require("./processVideo");
 const { jsonParser } = require("./common");
-const { generateASS, loadJson } = require("./utils");
+const { loadJson } = require("./utils");
+const { generateASS } = require("./subtitles");
 const fs = require("fs");
 
 const { PROJECT_ROOT } = require("../settings");

@@ -317,86 +317,6 @@ async function createThumbnail(
   return resizedBase64Image;
 }
 
-/**
- * Formats a timestamp given in seconds into a string in the format "HH:MM:SS.ss".
- *
- * This function takes a number of seconds, and returns a string representing that time
- * in the format "HH:MM:SS.ss", where HH represents hours, MM represents minutes, SS represents
- * integer seconds, and ss represents fractional seconds to two decimal places.
- *
- * @param {number} seconds - The number of seconds to format.
- * @returns {string} A string representing the formatted timestamp.
- */
-function formatTimestamp(seconds) {
-  const hours = Math.floor(seconds / 3600)
-    .toString()
-    .padStart(1, '0');
-  const minutes = Math.floor((seconds % 3600) / 60)
-    .toString()
-    .padStart(2, '0');
-  const secs = (seconds % 60)
-    .toFixed(2)
-    .padStart(5, '0');
-  return `${hours}:${minutes}:${secs}`;
-}
-
-/**
- * Generates an ASS (Advanced SubStation Alpha) subtitle file content from an array of subtitle objects.
- *
- * @param {Array} subtitles - An array of subtitle objects. Each object should have 'start', 'end', 'text', and 'words' properties.
- * @param {string} mode - The display mode for the subtitles ('reveal' or 'grow').
- * @returns {string} The content of an ASS subtitle file.
- */
-function generateASS(subtitles, mode) {
-  const header = `[Script Info]
-Title: Generated Subtitles
-ScriptType: v4.00+
-Collisions: Normal
-PlayResX: 384
-PlayResY: 288
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default, Arial, 24, &H00FFFFFF, &H000000FF, &H00000000, &H00000000, 0, 0, 0, 0, 100, 100, 0, 0, 1, 1, 0, 2, 10, 10, 10, 0
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text`;
-
-  let events = subtitles
-    .flatMap((sub) => {
-      return generateDialogueEntries(sub, mode);
-    })
-    .join("\n");
-
-  return `${header}\n${events}`;
-}
-
-/**
- * Generates dialogue entries for a single subtitle object.
- *
- * @param {Object} subtitle - A subtitle object with 'start', 'end', 'text', and 'words' properties.
- * @returns {Array} An array of dialogue strings for the subtitle.
- */
-function generateDialogueEntries(subtitle) {
-  const { start, end, text, words } = subtitle;
-  let dialogues = [];
-  let previousEnd = start;
-
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    const visibleText = words.slice(0, i + 1).map(w => w.word).join(' ');
-    const hiddenText = words.slice(i + 1).map(w => `{\\alpha&HFF&${w.word}}`).join(' ');
-    const dialogueText = `${visibleText} ${hiddenText}`.trim();
-    
-    dialogues.push(`Dialogue: 0,${formatTimestamp(previousEnd)},${formatTimestamp(word.end)},Default,,0,0,0,,${dialogueText}`);
-    previousEnd = word.end;
-  }
-
-  dialogues.push(`Dialogue: 0,${formatTimestamp(previousEnd)},${formatTimestamp(end)},Default,,0,0,0,,${text}`);
-
-  return dialogues;
-}
-
 // Function to cut off unfinished sentences from the end
 function cutOffUnfinishedSentences(text) {
   // Find the last occurrence of any sentence-ending punctuation
@@ -422,6 +342,5 @@ module.exports = {
   sanitizePath,
   sanitizePathSegments,
   prepareImage,
-  generateASS,
   cutOffUnfinishedSentences,
 };
