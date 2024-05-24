@@ -1,11 +1,11 @@
 const subSchema = (styles = {}) => {
     return {
-        Mode: styles.Mode || "karaoke",
+        Mode: styles.Mode || "basic",
         Name: styles.Name || "Default",
         Fontname: styles.Fontname || "Hug Me Tight",
         Fontsize: styles.Fontsize || 18,
-        PrimaryColour: styles.PrimaryColour || "&H000000FF",
-        SecondaryColour: styles.SecondaryColour || "&H0000FF00",
+        PrimaryColour: styles.PrimaryColour || "&H0040EEE8",
+        SecondaryColour: styles.SecondaryColour || "&H00FFFFFF",
         OutlineColour: styles.OutlineColour || "&H00000000",
         BackColour: styles.BackColour || "&H00000000",
         Bold: styles.Bold || 0,

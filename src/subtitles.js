@@ -63,12 +63,31 @@ function generateASS(subtitles, styles) {
  */
 function generateDialogueEntries(subtitle, mode) {
     switch (mode) {
+        case 'basic':
+            return basicDialogues(subtitle);
       case 'karaoke':
         return KaraokeDialogues(subtitle);
       default:
         throw new Error(`Unsupported mode: ${mode}`);
     }
   }
+
+  function basicDialogues(subtitle) {
+    const { words } = subtitle;
+    let dialogues = [];
+
+    // Process each segment of 5 words
+    for (let i = 0; i < words.length; i += 5) {
+        const segment = words.slice(i, i + 5);
+        const segmentStart = segment[0].start;
+        const segmentEnd = segment[segment.length - 1].end;
+        const segmentText = segment.map(word => word.word).join(' ');
+
+        dialogues.push(`Dialogue: 0,${formatTimestamp(segmentStart)},${formatTimestamp(segmentEnd)},Default,,0,0,0,,${segmentText}`);
+    }
+
+    return dialogues;
+}
 
   function KaraokeDialogues(subtitle) {
     const { words } = subtitle;
