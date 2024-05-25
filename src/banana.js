@@ -92,7 +92,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 
             busboy.on('close', async function () {
                 console.log('Done parsing form!');
-                const saveTo = path.join(saveFolder, `${fetchResponse.headers.get('Base-Filename')}.json`);
+                const saveTo = path.join(saveFolder, `datasheet.json`);
 
                 try {
                     await fs.promises.writeFile(saveTo, JSON.stringify(combinedData, null, 2));
@@ -161,12 +161,14 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
 router.post('/text2speech/context', jsonParser, async function (request, response) {
     const url = request.body.settings.api_server + '/text2speech/align';
     console.log('Received context TTS request:', request.body);
-    const fileName = request.body.context;
-    const filePath = `public/context/${fileName}/${fileName}.json`;
+    const folderName = request.body.context;
+    const contextPath = path.join('public', 'context', folderName);
+    const jsonPath = path.join(contextPath, 'datasheet.json');
+
 
     let json;
     try {
-        json = await fs.promises.readFile(filePath, 'utf8');
+        json = await fs.promises.readFile(jsonPath, 'utf8');
         json = JSON.parse(json);
     } catch (err) {
         console.error(`Failed to load JSON: ${err}`);
@@ -179,14 +181,19 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                 console.log('generatedResponse does not exist in the JSON');
                 return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
             }
-            try {
-                audioFilePath = path.join('public', 'context', fileName, `${fileName}_${key}.wav`);
-                await fs.promises.access(audioFilePath, fs.constants.F_OK);
-                console.log(`File exists: ${audioFilePath}, skipping...`);
-                continue; // Skip the rest of the current loop iteration
-            } catch (fileError) {
-                console.log(`File does not exist: ${audioFilePath}, processing...`);
-            }
+
+            // try {
+            //     if (json[key].hasOwnProperty('text2speech')) {
+            //         audioFilePath = path.join(contextPath, json[key].text2speech);
+            //         await fs.promises.access(audioFilePath, fs.constants.F_OK);
+            //         console.log(`File exists: ${audioFilePath}, skipping...`);
+            //     } else {
+            //         console.log(`text2speech does not exist in json[${key}]`);
+            //     }
+            //     continue;
+            // } catch (fileError) {
+            //     // Handle the error here
+            // }
 
             const payload = {
                 prompt: json[key].generatedResponse,
@@ -214,11 +221,11 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
             if (contentType && contentType.includes('multipart/form-data')) {
                 const busboy = Busboy({ headers: { 'content-type': contentType } });
                 fetchResponse.body.pipe(busboy);
-                const saveFolder = path.join('public', 'context', fileName);
+                const saveFolder = path.join('public', 'context', folderName);
 
                 busboy.on('file', function (fieldname, file, info) {
                     console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
-                    const saveTo = path.join(saveFolder, `${fileName}_${key}${path.extname(info.filename)}`);
+                    const saveTo = path.join(saveFolder, info.filename);
                     // file.on('data', function (data) {
                     //     console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
                     // });
@@ -230,7 +237,7 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                             json[key] = {};
                         }
                         // Assign the filename directly to json[key].text2speech
-                        json[key].text2speech = `${fileName}_${key}${path.extname(info.filename)}`;
+                        json[key].text2speech = info.filename;
                     });
 
                     file.pipe(fs.createWriteStream(saveTo));
@@ -261,9 +268,9 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
         }
 
         // Write back the modified JSON to the original file after all modifications
-        await fs.promises.writeFile(filePath, JSON.stringify(json, null, 2));
-        console.log('Updated JSON saved.' + filePath);
-        response.status(200).json({ message: 'TTS Complete', filepath: fileName });
+        await fs.promises.writeFile(jsonPath, JSON.stringify(json, null, 2));
+        console.log('Updated JSON saved: ' + jsonPath);
+        response.status(200).json({ message: 'TTS Complete', filepath: request.context });
     } catch (error) {
         console.error('Error during processing:', error);
         response.status(500).send('An error occurred');
