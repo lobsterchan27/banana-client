@@ -172,10 +172,10 @@ async function requestTTS(prompt, voice, settings) {
     fetchResponse = await fetch(url, {
       method: "POST",
       body: JSON.stringify(payload),
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
         'Authorization': 'Bearer ' + API_KEY,
-       },
+      },
     });
   } catch (error) {
     console.error(`Error during fetch: ${error.message}`);
@@ -228,6 +228,29 @@ async function loadJson(filename) {
 }
 
 /**
+ * Search folder to get the Json and return the path
+ * @param {String} folderPath 
+ * @param {Boolean} isInfoJson
+ * @returns {String | null} The path to the JSON file or null if not found.
+ */
+async function getJson(folderPath, isInfoJson = false) {
+  const files = await fs.promises.readdir(folderPath);
+  let jsonFile
+  if (isInfoJson) {
+    jsonFile = files.find((file) => file.endsWith("info.json"));
+  } else {
+    jsonFile = files.find((file) => file.endsWith(".json") && !file.endsWith('info.json'));
+  }
+
+
+  if (jsonFile) {
+    return path.join(folderPath, jsonFile);
+  }
+
+  return null;
+}
+
+/**
  * Asynchronously saves an object as a JSON file.
  *
  * This function takes a JavaScript object and a file path, converts the object to a JSON string,
@@ -273,11 +296,11 @@ function sanitizePath(originalPath) {
 
 function sanitizePathSegments(pathString) {
   return path.join(...pathString.split(path.sep).map(segment => {
-      // Replace last period in each segment with '#'
-      segment = segment.replace(/\.(?=[^.]*$)/, '#');
-      // Remove other invalid end characters
-      segment = segment.replace(/[\\/:*?"<>|]$/, '').trim();
-      return segment;
+    // Replace last period in each segment with '#'
+    segment = segment.replace(/\.(?=[^.]*$)/, '#');
+    // Remove other invalid end characters
+    segment = segment.replace(/[\\/:*?"<>|]$/, '').trim();
+    return segment;
   }));
 }
 
@@ -321,9 +344,9 @@ async function createThumbnail(
 function cutOffUnfinishedSentences(text) {
   // Find the last occurrence of any sentence-ending punctuation
   for (let i = text.length - 1; i >= 0; i--) {
-      if (".!?".includes(text[i])) {
-          return text.substring(0, i + 1).trim();
-      }
+    if (".!?".includes(text[i])) {
+      return text.substring(0, i + 1).trim();
+    }
   }
   return text;  // Return the original text if no punctuation is found
 }
@@ -337,6 +360,7 @@ module.exports = {
   requestTTS,
   convertImagesToBase64,
   loadJson,
+  getJson,
   saveJson,
   delay,
   sanitizePath,
