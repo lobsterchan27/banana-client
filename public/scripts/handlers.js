@@ -72,32 +72,39 @@ async function handleTextToSpeechButtonClick(event, processingIndicator, complet
     const api_server = document.getElementById('banana-api-server').value;
     const prompt = document.getElementById('tts-prompt').value;
 
+
+    await text2speech({ prompt, settings: { api_server } }).finally(() => {
+        showCompletionIndicator(processingController, completionIndicator);
+    });
+}
+
+async function handleDownloadVideoButtonClick(event, processingIndicator, completionIndicator) {
+    showProcessingIndicator(processingIndicator, completionIndicator);
+
+    const url = document.getElementById('transcribe-url').value;
     try {
-        await text2speech({ prompt, settings: { api_server } });
+        await downloadVideo(url);
+    } catch (error) {
+        console.error("Failed to download video:", error);
     } finally {
         showCompletionIndicator(processingIndicator, completionIndicator);
     }
 }
 
-function handleDownloadVideoButtonClick(event, processingIndicator, completionIndicator) {
-    showProcessingIndicator(processingIndicator, completionIndicator);
-
-    const url = document.getElementById('transcribe-url').value;
-    downloadVideo(url)
-        .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
-}
-
-function handleTranscribeUrlButtonClick(event, processingIndicator, completionIndicator) {
+async function handleTranscribeUrlButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
     const api_server = document.getElementById('banana-api-server').value;
     const url = document.getElementById('transcribe-url').value;
-    transcribeUrl({ api_server, url, minimum_interval: 2 })
-        .finally(() => showCompletionIndicator(processingIndicator, completionIndicator))
-        .then(getFolders);
+
+    // Just call the asynchronous functions without a try/catch since errors are handled internally.
+    await transcribeUrl({ api_server, url, minimum_interval: 2 });
+    await getFolders();
+
+    showCompletionIndicator(processingIndicator, completionIndicator);
 }
 
-function handleProcessContextButtonClick(event, processingIndicator, completionIndicator) {
+async function handleProcessContextButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
     const api_server = document.getElementById('kobold-api-server').value;
@@ -108,11 +115,12 @@ function handleProcessContextButtonClick(event, processingIndicator, completionI
     settings.api_server = api_server;
     settings.streaming = false;
 
-    processContext({ settings, context })
-        .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
+    await processContext({ settings, context }).finally(() => {
+        showCompletionIndicator(processingController, completionIndicator);
+    });
 }
 
-function handleContextTTSButtonClick(event, processingIndicator, completionIndicator) {
+async function handleContextTTSButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
     const api_server = document.getElementById('banana-api-server').value;
@@ -122,23 +130,23 @@ function handleContextTTSButtonClick(event, processingIndicator, completionIndic
     const voicefix = true
     const vc = true
 
-    contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } })
+    await contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
-function handleCombineAudioButtonClick(event, processingIndicator, completionIndicator) {
+async function handleCombineAudioButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
     const contextName = document.getElementById('context-input').value;
-    combineAudio(contextName)
+    await combineAudio(contextName)
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
-function handleGenerateSubsButtonClick(event, processingIndicator, completionIndicator) {
+async function handleGenerateSubsButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
     const contextName = document.getElementById('context-input').value;
-    generateSubs(contextName)
+    await generateSubs(contextName)
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
