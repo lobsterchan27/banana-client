@@ -81,9 +81,10 @@ async function handleTextToSpeechButtonClick(event, processingIndicator, complet
 async function handleDownloadVideoButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
-    const url = document.getElementById('transcribe-url').value;
+    const args = {}
+    args.context = document.getElementById('context-input').value;
     try {
-        await downloadVideo(url);
+        await downloadVideo(args);
     } catch (error) {
         console.error("Failed to download video:", error);
     } finally {

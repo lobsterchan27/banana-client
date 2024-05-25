@@ -23,7 +23,7 @@ async function audioSilenceStitch(contextName) {
   for (const [key, segment] of Object.entries(json)) {
 
     const entryTime = segment.segments[segment.segments.length - 1].end;
-    const currentAudioFilePath = path.join(contextPath, segment.text2speech);
+    const currentAudioFilePath = path.join(contextPath, `${key}_${segment.text2speech}`);
     let info = await getAudioInfo(currentAudioFilePath);
     const silenceDuration = Math.max(0, (entryTime - prevEntryTime - prevInfoDuration).toFixed(3));
     silenceDurations.push(silenceDuration);

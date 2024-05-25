@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const { jsonParser } = require('./common');
 const { PROJECT_ROOT, YT_DLP_BINARY_PATH } = require("../settings");
+const { loadJson, getJson } = require('./utils');
 const fs = require('fs');
 
 const YTDlpWrap = require('yt-dlp-wrap').default;
@@ -11,15 +12,50 @@ const router = express.Router();
 
 router.post('/download', jsonParser, async function (request, response) {
     const url = request.body.url;
-    const outputPath = 'public/context/%(title)s/%(title)s.%(ext)s';
+    const outputPath = path.join('public', 'context', '%(title)s', '%(title)s.%(ext)s');
     // Configure yt-dlp options
     const options = [
         url,
-        '-f', 'bestvideo',
+        '-f', 'bestvideo+bestaudio',
         '-o', outputPath,
         '--restrict-filenames',
         '--write-info-json',
-        '--no-overwrites'
+        '--no-overwrites',
+        '--merge-output-format', 'mp4'
+    ];
+
+    // Execute download
+    try {
+        const result = await ytDlpWrap.execPromise(options);
+        console.log(result);
+
+        const downloadedFile = parseFilenameFromResult(result);
+        console.log('Downloaded file:', downloadedFile);
+
+        response.json({ filename: downloadedFile });
+    } catch (error) {
+        console.error('Download failed:', error);
+        response.status(500).send('Download failed');
+    }
+});
+
+router.post('/download/context', jsonParser, async function (request, response) {
+    const contextPath = path.join('public', 'context', request.body.context);
+    const jsonPath = await getJson(contextPath, true);
+    const json = await loadJson(jsonPath);
+    const url = json.webpage_url;
+    console.log(jsonPath)
+    console.log('Downloading video:', url);
+    const outputPath = path.join(contextPath, '%(title)s.%(ext)s');
+    // Configure yt-dlp options
+    const options = [
+        url,
+        '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+        '-o', outputPath,
+        '--restrict-filenames',
+        '--write-info-json',
+        '--no-overwrites',
+        '--merge-output-format', 'mp4'
     ];
 
     // Execute download

@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const { processVideo } = require("./processVideo");
 const { jsonParser } = require("./common");
-const { loadJson } = require("./utils");
+const { loadJson, getJson } = require("./utils");
 const { generateASS } = require("./subtitles");
 const fs = require("fs");
 
@@ -12,8 +12,8 @@ const router = express.Router();
 
 router.post('/generate/subs', jsonParser, async function (req, res) {
   const { contextName } = req.body;
-  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
-  const jsonPath = path.join(contextPath, `${contextName}.json`);
+  const contextPath = path.join("public", "context", contextName);
+  const jsonPath = await getJson(contextPath);
   const outputPath = path.join(contextPath, `${contextName}.ass`);
   const data = await loadJson(jsonPath);
 

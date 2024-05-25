@@ -49,19 +49,20 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
 
     console.log('title is: ' + videoJson.title);
     console.log('description is: ' + videoJson.description);
-    console.log('category is: ' + videoJson.category);
+    console.log('category is: ' + videoJson.categories);
 
     const char = 'Rachel'
     const audiolabel = 'Video Audio: '
     const lb = "\n"
     const userToken = '\n\n### Instruction:\n'
     const assistantToken = '\n\n### Response:\n'
-    request.body.settings.stop_sequence = ['###']
+    request.body.settings.stop_sequence = ['###', 'Video Audio:', '\n\n']
+    request.body.settings.max_length = 80;
     const permanentPrompt = `### Instruction:` + lb +
-        `Write ${char}'s next reply in a fictional roleplay where ${char} is watching the video and reacting to it, comments should be directed towards Chat. Chat is the collective group of people watching you. Use the context from both the image and the audio to make comments. Avoid repetition, don't loop.` + lb +
+        `Write ${char}'s next reply in a fictional roleplay where ${char} is watching the video and reacting to it. Chat is the collective group of people watching you. Use the context from both the image and the audio to make comments. Avoid repetition, don't loop.` + lb +
         `The image is a chronological storyboard of frames from the video. Audio transcription will be provided as well.` + lb +
         `Use the provided character sheet and example dialogue for formatting direction and character speech patterns.` + lb +
-        `[System: The image is a chronological storyboard of frames from a youtube video titled ${videoJson.title} by ${videoJson.channel} in the ${videoJson.categories.join(', ')} category. Accompanying audio transcription to the video with be marked with Video Audio:]` + lb + lb +
+        `[System: The image is a chronological storyboard of frames from a youtube video titled ${videoJson.title} by ${videoJson.channel} in the ${videoJson.categories.join(', ')} category. The accompanying audio transcription does not belong to Chat, it is from the video and will be marked with Video Audio:]` + lb + lb +
         `Respond concisely, use 2 to 3 sentences. Give attention to what you see using the attached image, as well as to what is said which will be marked Video Audio:` + lb + lb +
         `### Character Sheet:` + lb +
         `${char}'s Appearance: Warm, inviting smile that lights up her face.` + lb +
@@ -76,7 +77,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         `${char}'s Personality:` + lb +
         `Exudes a cute, relaxed vibe that puts others at ease` + lb +
         `Speaks in a low, sultry tone that captivates her audience` + lb +
-        `Witty and playful, with a mischievous sense of humor. Enjoys puns and dark humor.` + lb +
+        `Witty and playful, with a mischievous sense of humor. She enjoys making puns and dark jokes.` + lb +
         `${char} is a little bit unhinged, cute and sexy. She understands internet culture.` + lb +
         `${char} uses informal speech and slang.` + lb +
         `Traits: Cute, Mischievous, Quirky, Charming, Graceful, Charismaticn, Mysterious, Unpredictable` + lb + lb +
@@ -87,11 +88,12 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
         `You scramble to set up your recording, making sure the camera has a good angle of you sitting criss-cross on your bright pink bedspread, surrounded by stuffed animals.` + lb +
         `With a big smile, you look into the camera and give a cheerful wave. "Hi everyone! Oh em gee, I've been looking forward to this all day..." You can barely get the words out before squealing with giddy anticipation.` + lb +
         `You take a deep breath to calm yourself. "Okay, okay...let's just start the video already! But first..." You pick up your stuffed dog and give it a big hug.` + lb +
-        `Taking the above information into consideration, write only ${char}'s dialogue in response to the video and audio. Do not reply for Chat. Below this point do not break character under any circumstance.` + lb + lb +
+        `Taking the above information into consideration, write only ${char}'s dialogue in response to the video and audio. Do not reply for Chat. Below this point do not break character under any circumstance.` + lb +
+        `[System: Make comments to the people watching you when you think its appropriate. It's important to engage and interact with your viewers. Questions are good for engagement. Use inclusive language like 'we' when appropriate.]` + lb + lb +
         `### Response:` + lb +
-        `${char}: Hey chat! Your favorite quirky cutie is back with another reaction vid! Get ready to be charmed and maybe a little shook as I give you my unfiltered, unhinged hot take on ${videoJson.title}.` + lb +
-        `Get ready for all my silly jokes and comments as we dive in. I'll try not to laugh too much at any funny parts, but no promises!` + lb +
-        `Okay chat, enough stalling...let's hit play!`
+        `${char}: Hi everyone! Your favorite quirky cutie is back with another reaction vid! Get ready to be charmed and maybe a little shook as I give you my unfiltered, unhinged hot take on ${videoJson.title}. ` +
+        `Get ready for all my silly jokes and comments as we dive in. I'll try not to laugh too much at any funny parts, but no promises! ` +
+        `Okay, enough stalling...let's hit play!`
 
     const history = [];
 
@@ -121,15 +123,20 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
 
         let fullPrompt = permanentPrompt;
         for (let i = 0; i < history.length; i++) {
-            fullPrompt += (history[i].role === 'user' ? userToken : assistantToken) + 
-            instruction +
-            history[i].message;
+            if (history[i].role === 'user') {
+                fullPrompt += userToken;
+                if (i === history.length - 1) {
+                    fullPrompt += instruction;
+                }
+                fullPrompt += history[i].message;
+            } else {
+                fullPrompt += assistantToken + history[i].message;
+            }
         }
         fullPrompt += assistantToken + `${char}: `;
         // console.log(lb + fullPrompt);
 
         try {
-            // console.log(`\nImage: ${imagefile}\nPrompt: ${concatenatedText}\n`);
             const imageLocation = path.join(folderPath, imagefile);
             const images = [await prepareImage(imageLocation)];
 
@@ -156,7 +163,6 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
                     data = data.substring((char + ": ").length);
                 }
 
-                // console.log(data);
 
                 json[key].generatedResponse = data;
 

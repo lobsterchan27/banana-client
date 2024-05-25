@@ -112,14 +112,14 @@ async function text2speech(args) {
  * Takes youtube URL and downloads the video to context folder with the same name as the video.
  * 
  * @param {Object} args - The arguments for the transcription.
- * @param {string} args.url - The URL to transcribe.
+ * @param {string} args.context - The URL to transcribe.
  */
 async function downloadVideo(args) {
     const payload = {
-        url: args
+        context: args.context,
     }
 
-    return fetch('/youtube/download', {
+    return fetch('/youtube/download/context', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
