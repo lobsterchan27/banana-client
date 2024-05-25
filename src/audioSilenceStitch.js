@@ -1,14 +1,13 @@
 const path = require("path");
 const wavFileInfo = require("wav-file-info");
-const { loadJson, saveJson } = require("./utils");
+const { loadJson, saveJson, getJson } = require("./utils");
 const { exec } = require('child_process');
 const { PROJECT_ROOT } = require("../settings");
 const fs = require('fs');
 
 async function audioSilenceStitch(contextName) {
-  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
-  const jsonPath = path.join(contextPath, `${contextName}.json`);
-  const contextChunks = await loadJson(jsonPath);
+  const contextPath = path.join("public", "context", contextName);
+  const jsonPath = await getJson(contextPath);
   const outputFile = path.join(contextPath, `${contextName}_final_output.wav`);
 
   let prevEntryTime = 0;
@@ -18,10 +17,13 @@ async function audioSilenceStitch(contextName) {
   let streamIndex = 0;
   let silenceDurations = [];
 
+  const json = await loadJson(jsonPath);
+
   // creating ffmpeg command
-  for (const [key, segment] of Object.entries(contextChunks)) {
+  for (const [key, segment] of Object.entries(json)) {
+
     const entryTime = segment.segments[segment.segments.length - 1].end;
-    const currentAudioFilePath = path.join(contextPath, `${contextName}_${key}.wav`);
+    const currentAudioFilePath = path.join(contextPath, segment.text2speech);
     let info = await getAudioInfo(currentAudioFilePath);
     const silenceDuration = Math.max(0, (entryTime - prevEntryTime - prevInfoDuration).toFixed(3));
     silenceDurations.push(silenceDuration);
@@ -43,25 +45,26 @@ async function audioSilenceStitch(contextName) {
 
   // update subs times
   let endTime = 0;
-  const firstSubStart = Object.values(contextChunks)[0].subs[0].start;
-  console.log("firstSubStart", firstSubStart)
-  console.log("silenceDurations", silenceDurations[0])
+  const firstSubStart = Object.values(json)[0].subs[0].start;
+  console.log("firstSubStart", firstSubStart);
+  console.log("silenceDurations", silenceDurations[0]);
   if (firstSubStart < silenceDurations[0]) {
-    console.log("updating sub times")
+    console.log("updating sub times");
 
     // Backup the original JSON file
-    const backupPath = path.join(path.dirname(jsonPath), 'backup.json');
+    const backupPath = path.join(contextPath, 'json.bak');
     fs.copyFileSync(jsonPath, backupPath);
     
-    for (const [key, segment] of Object.entries(contextChunks)) {
+    for (const [key, segment] of Object.entries(json)) {
       const prevEndTime = updateSubTimes(segment.subs, silenceDurations[key], endTime);
-      console.log(prevEndTime)
-      endTime = prevEndTime;  
+      console.log(prevEndTime);
+      endTime = prevEndTime;
     }
     // Save the updated contextChunks back to the JSON file
-    await saveJson(jsonPath, contextChunks);
+    console.log(json);
+    await saveJson(jsonPath, json);
   } else {
-    console.log("subs already updated")
+    console.log("subs already updated");
   }
 
   // Build and execute FFmpeg command
