@@ -246,10 +246,8 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                 busboy.on('field', function (fieldname, val, info) {
                     console.log('Got ' + fieldname + '. Parsing to JSON');
                     const newData = JSON.parse(val);
+                    json[key].subs = {}; // Clear json[key].subs
                     for (let subKey in newData) {
-                        if (!json[key].subs) {
-                            json[key].subs = {};
-                        }
                         json[key].subs[subKey] = newData[subKey];
                     }
                 });

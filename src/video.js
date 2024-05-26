@@ -15,25 +15,25 @@ router.post('/generate/subs', jsonParser, async function (req, res) {
   const contextPath = path.join("public", "context", contextName);
   const jsonPath = await getJson(contextPath);
   const outputPath = path.join(contextPath, `${contextName}.ass`);
-  const data = await loadJson(jsonPath);
+  const json = await loadJson(jsonPath);
 
-  const subtitles = Object.values(data)
+  const subtitles = Object.values(json)
     .map(item => Object.values(item.subs))
     .reduce((acc, val) => acc.concat(val), []);
 
   const assContent = generateASS(subtitles);
-    
-    // Write ASS content to a file
-    fs.writeFile(outputPath, assContent, (err) => {
-      if (err) {
-        console.error('Error writing to file:', err);
-        res.status(500).send({ message: 'Error generating subtitles' });
-      } else {
-        console.log('Successfully wrote to file.');
-        res.send({ message: 'Subtitles generated' });
-      }
-    });
+
+  // Write ASS content to a file
+  fs.writeFile(outputPath, assContent, 'utf-8', (err) => {
+    if (err) {
+      console.error('Error writing to file:', err);
+      res.status(500).send({ message: 'Error generating subtitles' });
+    } else {
+      console.log('Successfully wrote to file.');
+      res.send({ message: 'Subtitles generated' });
+    }
   });
+});
 
 router.post("/processvideo", async function (request, response) {
   const contextName = await request.body.contextName;
@@ -50,7 +50,7 @@ router.post("/processvideo", async function (request, response) {
   response.json({ outputVideo });
 });
 
-router.post("/live2d"), jsonParser, async function(request, response) {
+router.post("/live2d"), jsonParser, async function (request, response) {
 
 
 }

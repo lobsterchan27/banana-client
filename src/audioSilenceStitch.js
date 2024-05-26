@@ -15,53 +15,71 @@ async function audioSilenceStitch(contextName) {
   let ffmpegInputs = [];
   let concatFilter = [];
   let streamIndex = 0;
-  let silenceDurations = [];
+  const silenceDurations = [];
+  const clipDurations = [];
+  const audioPaths = [];
 
   const json = await loadJson(jsonPath);
 
+  let info
   // creating ffmpeg command
   for (const [key, segment] of Object.entries(json)) {
 
     const entryTime = segment.segments[segment.segments.length - 1].end;
     const currentAudioFilePath = path.join(contextPath, `${key}_${segment.text2speech}`);
-    let info = await getAudioInfo(currentAudioFilePath);
-    const silenceDuration = Math.max(0, (entryTime - prevEntryTime - prevInfoDuration).toFixed(3));
+    audioPaths.push(currentAudioFilePath);
+    info = await getAudioInfo(currentAudioFilePath);
+    clipDurations.push(info.duration);
+    // const silenceDuration = Math.max(0, (entryTime - prevEntryTime - prevInfoDuration).toFixed(6));
+    const silenceDuration = parseFloat((entryTime - prevEntryTime - prevInfoDuration).toFixed(6));
+    console.log("Entry time:", entryTime);
+    console.log("Previous entry time:", prevEntryTime);
+    console.log("Previous info duration:", prevInfoDuration);
+    console.log("Silence duration:", silenceDuration);
     silenceDurations.push(silenceDuration);
 
-    // Prepare FFmpeg command parts
-    if (silenceDuration > 0) {
-      ffmpegInputs.push(`-f lavfi -t ${silenceDuration} -i anullsrc=r=48000:cl=mono`);
-      concatFilter.push(`[${streamIndex}:a]`);
-      streamIndex++;
+    if (silenceDuration < 1.5) {
+      adjustPreviousSilence(silenceDurations, silenceDurations.length - 1, 1.5);
     }
-    ffmpegInputs.push(`-i "${currentAudioFilePath}"`);
-    concatFilter.push(`[${streamIndex}:a]`);
-    streamIndex++;
 
     // Update variables for next iteration
     prevInfoDuration = info.duration;
     prevEntryTime = entryTime;
   }
 
+  for (let key in silenceDurations) {
+    // Prepare FFmpeg command parts
+    if (silenceDurations[key] > 0) {
+      ffmpegInputs.push(`-f lavfi -t ${silenceDurations[key]} -i anullsrc=r=48000:cl=mono`);
+      concatFilter.push(`[${streamIndex}:a]`);
+      streamIndex++;
+    }
+    ffmpegInputs.push(`-i "${audioPaths[key]}"`);
+    concatFilter.push(`[${streamIndex}:a]`);
+    streamIndex++;
+  }
+
+  console.log('final info duration: ', info.duration)
+  console.log('silence durations: ', silenceDurations)
+
+
   // update subs times
-  let endTime = 0;
+  let total = 0;
   const firstSubStart = Object.values(json)[0].subs[0].start;
-  console.log("firstSubStart", firstSubStart);
-  console.log("silenceDurations", silenceDurations[0]);
   if (firstSubStart < silenceDurations[0]) {
     console.log("updating sub times");
 
     // Backup the original JSON file
     const backupPath = path.join(contextPath, 'json.bak');
     fs.copyFileSync(jsonPath, backupPath);
-    
+
     for (const [key, segment] of Object.entries(json)) {
-      const prevEndTime = updateSubTimes(segment.subs, silenceDurations[key], endTime);
-      console.log(prevEndTime);
-      endTime = prevEndTime;
+      total += silenceDurations[key];
+      updateSubTimes(segment.subs, total);
+      total += clipDurations[key];
+      // console.log(prevEndTime);
     }
     // Save the updated contextChunks back to the JSON file
-    console.log(json);
     await saveJson(jsonPath, json);
   } else {
     console.log("subs already updated");
@@ -70,7 +88,7 @@ async function audioSilenceStitch(contextName) {
   // Build and execute FFmpeg command
   let filterComplex = `${concatFilter.join("")}concat=n=${concatFilter.length}:v=0:a=1`;
   let ffmpegCmd = `ffmpeg ${ffmpegInputs.join(" ")} -filter_complex "${filterComplex}" "${outputFile}"`;
-  console.log("FFmpeg command:", ffmpegCmd);
+  // console.log("FFmpeg command:", ffmpegCmd);
 
   exec(ffmpegCmd, (error, stdout, stderr) => {
     if (error) {
@@ -81,19 +99,18 @@ async function audioSilenceStitch(contextName) {
   });
 }
 
-function updateSubTimes(subs, silenceDuration, endTime) {
-  let prevEndTime = 0;
+//this shit is so dummbbbbbbbbbbb
+function updateSubTimes(subs, total) {
   for (const subKey of Object.keys(subs)) {
-    subs[subKey].start = parseFloat((parseFloat(subs[subKey].start) + silenceDuration + endTime).toFixed(3));
-    subs[subKey].end = parseFloat((parseFloat(subs[subKey].end) + silenceDuration + endTime).toFixed(3));
+    subs[subKey].start = parseFloat((parseFloat(subs[subKey].start) + total).toFixed(6));
+    subs[subKey].end = parseFloat((parseFloat(subs[subKey].end) + total).toFixed(6));
     subs[subKey].words = subs[subKey].words.map(word => ({
       ...word,
-      start: parseFloat((parseFloat(word.start) + silenceDuration + endTime).toFixed(3)),
-      end: parseFloat((parseFloat(word.end) + silenceDuration + endTime).toFixed(3))
+      start: parseFloat((parseFloat(word.start) + total).toFixed(6)),
+      end: parseFloat((parseFloat(word.end) + total).toFixed(6))
     }));
-    prevEndTime = subs[subKey].end;
   }
-  return prevEndTime;
+  return
 }
 
 async function getAudioInfo(filePath) {
@@ -107,6 +124,38 @@ async function getAudioInfo(filePath) {
       }
     });
   });
+}
+
+function adjustPreviousSilence(silenceDurations, index, minSilenceDuration = 1.5) {
+  // Base case: if the first index or no negative value, return
+  if (index <= 0 || silenceDurations[index] >= minSilenceDuration) return;
+
+  if (silenceDurations[index - 1] > minSilenceDuration) {
+    let neededAdjustment = parseFloat((-silenceDurations[index] + minSilenceDuration).toFixed(6)); // Calculate the needed adjustment to reach the minimum silence
+    let possibleAdjustment = parseFloat((Math.min(silenceDurations[index - 1] - minSilenceDuration, neededAdjustment)).toFixed(6));
+    silenceDurations[index - 1] = parseFloat((silenceDurations[index - 1] - possibleAdjustment).toFixed(6));
+    silenceDurations[index] = parseFloat((silenceDurations[index] + possibleAdjustment).toFixed(6));
+  }
+
+  // Recursive call to adjust the previous index if it turns negative or below the minimum threshold
+  adjustPreviousSilence(silenceDurations, index - 1, minSilenceDuration);
+}
+
+function adjustSilenceDurations(silenceDurations) {
+  let changesMade;
+  do {
+    changesMade = false; // Flag to check if any adjustments were made in the current pass
+    for (let i = 1; i < silenceDurations.length; i++) {
+      if (silenceDurations[i] < 0 && silenceDurations[i - 1] > 0) {
+        let adjustment = Math.min(silenceDurations[i - 1], -silenceDurations[i]);
+        silenceDurations[i - 1] -= adjustment; // Reduce the previous value by the adjustment amount
+        silenceDurations[i] += adjustment; // Increase the current negative duration
+        changesMade = true; // Mark that an adjustment was made
+      }
+    }
+  } while (changesed); // Repeat if any adjustments were made
+
+  return silenceDurations;
 }
 
 module.exports = audioSilenceStitch;
