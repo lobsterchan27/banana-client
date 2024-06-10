@@ -47,13 +47,18 @@ router.post('/download/context', jsonParser, async function (request, response) 
     console.log(jsonPath)
     console.log('Downloading video:', url);
     const outputPath = path.join(contextPath, '%(title)s.%(ext)s');
+
+    const dimension = json.width < json.height ? 'width' : 'height';
+    const pixelLimit = 1080;
+    const downloadFormat = `bestvideo[${dimension}<=${pixelLimit}]+bestaudio`;
+    console.log('Dimension:', dimension, 'Limit:', pixelLimit);
+
     // Configure yt-dlp options
     const options = [
-        url,
-        '-f', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+        '--load-info-json', jsonPath,
+        '-f', downloadFormat,
         '-o', outputPath,
         '--restrict-filenames',
-        '--write-info-json',
         '--no-overwrites',
         '--merge-output-format', 'mp4'
     ];
