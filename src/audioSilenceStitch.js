@@ -80,6 +80,7 @@ async function audioSilenceStitch(contextName) {
       // console.log(prevEndTime);
     }
     // Save the updated contextChunks back to the JSON file
+    json.overlayAudio = path.basename(outputFile);
     await saveJson(jsonPath, json);
   } else {
     console.log("subs already updated");

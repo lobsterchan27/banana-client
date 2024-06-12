@@ -43,6 +43,8 @@ router.post('/download/context', jsonParser, async function (request, response) 
     const contextPath = path.join('public', 'context', request.body.context);
     const jsonPath = await getJson(contextPath, true);
     const json = await loadJson(jsonPath);
+    const datasheetJsonPath = await getJson(contextPath);
+    const datasheetJson = await loadJson(datasheetJsonPath);
     const url = json.webpage_url;
     console.log('Downloading video:', url);
     // const filename = ytdlpSanitize(json.title + '-' + json.id + '.mp4');
@@ -78,7 +80,10 @@ router.post('/download/context', jsonParser, async function (request, response) 
         const result = await ytDlpWrap.execPromise(options);
         console.log(result);
 
-        const downloadedFile = parseFilenameFromResult(result);
+        const downloadedFile = path.basename(parseFilenameFromResult(result));
+        datasheetJson.original = downloadedFile;
+        await fs.promises.writeFile(datasheetJsonPath, JSON.stringify(datasheetJson, null, 2));
+
         console.log('Downloaded file:', downloadedFile);
 
         response.json({ filename: downloadedFile });
