@@ -99,24 +99,25 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
 
     const controller = createAbortController(request, response);
 
-    const keys = Object.keys(json);
-    const lastKey = keys[keys.length - 1];
+    let index = 0;
+    const lastKey = json.data.length;
+    console.log('lastKey:', lastKey);
 
-    for (let key in json) {
-
+    for (const key of json.data) {
+        index++
         // if (json[key].hasOwnProperty('generatedResponse')) {
         //     console.log(`Skipping ${json[key].filename} because a response has already been generated.`);
         //     continue;
         // }
 
-        const imagefile = json[key].imagename;
+        const imagefile = key.imagename;
 
-        let concatenatedText = audiolabel + json[key].segments.map(segment => segment.text).join(' ');
+        let concatenatedText = audiolabel + key.segments.map(segment => segment.text).join(' ');
 
         //temp hack full prompt
         history.push({ role: 'user', message: concatenatedText });
         let instruction = '[System: The image corresponds to the transcribed video audio below. Write a brief 2 to 3 sentence response to the video and audio. Use the character sheet and example dialogue for formatting direction and character speech patterns.]' + lb;
-        if (key === lastKey) {
+        if (index === lastKey) {
             instruction = `[System: The image corresponds to the transcribed video audio below. This is the last part of the video. Let's give our viewers a good closer. Use the character sheet and example dialogue for formatting direction and character speech patterns.]` + lb;
             request.body.settings.max_length = 200;
         }
@@ -144,7 +145,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
             const fetchResponse = await makeRequest(fullPrompt, images, request.body.settings, controller);
             if (request.body.settings.streaming) {
                 const data = await handleStream(fetchResponse, response);
-                json[key].generatedResponse = data;
+                key.generatedResponse = data;
 
                 // Add the assistant's response to the history
                 history.push({ role: 'assistant', message: data });
@@ -164,7 +165,7 @@ router.post('/generate/context', jsonParser, checkRequestBody, async function (r
                 }
 
 
-                json[key].generatedResponse = data;
+                key.generatedResponse = data;
 
                 // Add the assistant's response to the history
                 history.push({ role: 'assistant', message: data });

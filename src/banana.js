@@ -54,7 +54,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
         if (contentType && contentType.includes('multipart/form-data')) {
             const busboy = Busboy({ headers: { 'content-type': contentType } });
             fetchResponse.body.pipe(busboy);
-            const combinedData = {};
+            const combinedData = { data: [] };
             const base_filename = fetchResponse.headers.get('Base-Filename');
             const saveFolder = sanitizePathSegments(path.join('public', 'context', base_filename));
 
@@ -76,10 +76,10 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 
                 if (fieldname === 'segments') {
                     for (let key in data) {
-                        if (combinedData[key]) {
-                            combinedData[key] = combinedData[key].concat(data[key]);
+                        if (combinedData.data[key]) {
+                            combinedData.data[key] = combinedData.data[key].concat(data[key]);
                         } else {
-                            combinedData[key] = data[key];
+                            combinedData.data[key] = data[key];
                         }
                     }
                 } else {
@@ -176,8 +176,10 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
     }
 
     try {
-        for (let key in json) {
-            if (!json[key].hasOwnProperty('generatedResponse')) {
+        let index = 0;
+        for (const key of json.data) {
+            index++;
+            if (!key.hasOwnProperty('generatedResponse')) {
                 console.log('generatedResponse does not exist in the JSON');
                 return response.status(400).json({ error: 'generatedResponse does not exist in the JSON' });
             }
@@ -196,7 +198,7 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
             // }
 
             const payload = {
-                prompt: json[key].generatedResponse,
+                prompt: key.generatedResponse,
                 voice: request.body.voice,
                 backend: request.body.backend,
                 voicefix: request.body.voicefix,
@@ -225,7 +227,7 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
 
                 busboy.on('file', function (fieldname, file, info) {
                     console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
-                    const saveTo = path.join(saveFolder, `${key}_${info.filename}`);
+                    const saveTo = path.join(saveFolder, `${index}_${info.filename}`);
                     // file.on('data', function (data) {
                     //     console.log('File [' + fieldname + '] got ' + data.length + ' bytes');
                     // });
@@ -233,11 +235,11 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                     file.on('end', function () {
                         console.log('File [' + fieldname + '] Finished');
                         console.log(saveTo);
-                        if (!json[key]) {
-                            json[key] = {};
+                        if (!key) {
+                            key = {};
                         }
                         // Assign the filename directly to json[key].text2speech
-                        json[key].text2speech = info.filename;
+                        key.text2speech = `${index}_${info.filename}`;
                     });
 
                     file.pipe(fs.createWriteStream(saveTo));
@@ -246,15 +248,15 @@ router.post('/text2speech/context', jsonParser, async function (request, respons
                 busboy.on('field', function (fieldname, val, info) {
                     console.log('Got ' + fieldname + '. Parsing to JSON');
                     const newData = JSON.parse(val);
-                    json[key].subs = {}; // Clear json[key].subs
+                    key.subs = {}; // Clear json[key].subs
                     for (let subKey in newData) {
-                        json[key].subs[subKey] = newData[subKey];
+                        key.subs[subKey] = newData[subKey];
                     }
                 });
 
                 await new Promise((resolve, reject) => {
                     busboy.on('close', () => {
-                        console.log(key + ' of ' + json.length + ' done.');
+                        console.log(index + ' of ' + json.data.length + ' done.');
                         resolve();
                     });
                     busboy.on('error', (err) => {

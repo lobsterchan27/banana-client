@@ -23,10 +23,10 @@ async function audioSilenceStitch(contextName) {
 
   let info
   // creating ffmpeg command
-  for (const [key, segment] of Object.entries(json)) {
+  for (const [key, segment] of Object.entries(json.data)) {
 
     const entryTime = segment.segments[segment.segments.length - 1].end;
-    const currentAudioFilePath = path.join(contextPath, `${key}_${segment.text2speech}`);
+    const currentAudioFilePath = path.join(contextPath, segment.text2speech);
     audioPaths.push(currentAudioFilePath);
     info = await getAudioInfo(currentAudioFilePath);
     clipDurations.push(info.duration);
@@ -65,7 +65,7 @@ async function audioSilenceStitch(contextName) {
 
   // update subs times
   let total = 0;
-  const firstSubStart = Object.values(json)[0].subs[0].start;
+  const firstSubStart = Object.values(json.data)[0].subs[0].start;
   if (firstSubStart < silenceDurations[0]) {
     console.log("updating sub times");
 
@@ -73,7 +73,7 @@ async function audioSilenceStitch(contextName) {
     const backupPath = path.join(contextPath, 'json.bak');
     fs.copyFileSync(jsonPath, backupPath);
 
-    for (const [key, segment] of Object.entries(json)) {
+    for (const [key, segment] of Object.entries(json.data)) {
       total += silenceDurations[key];
       updateSubTimes(segment.subs, total);
       total += clipDurations[key];
