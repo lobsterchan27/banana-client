@@ -307,6 +307,27 @@ async function generateSubs(contextName) {
     }
 }
 
+/**
+ * Generates a live2d video using the specified context.
+ * @param {string} contextName - The name of the folder containing the context.
+ */
+async function live2d(contextName) {
+    try {
+        const response = await fetch('/video/live2d', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ contextName })
+        });
+
+        const data = await response.json();
+        console.log('Response:', data);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
 export {
     textGenerate,
     text2speech,
@@ -316,4 +337,5 @@ export {
     contextTTS,
     combineAudio,
     generateSubs,
+    live2d,
 }

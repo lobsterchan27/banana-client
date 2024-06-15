@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         'context-tts-button':       { event: 'click',   handler: handlers.handleContextTTSButtonClick,      useIndicators: true  },
         'combine-audio-button':     { event: 'click',   handler: handlers.handleCombineAudioButtonClick,    useIndicators: true  },
         'generate-subs-button':     { event: 'click',   handler: handlers.handleGenerateSubsButtonClick,    useIndicators: true  },
+        'live2d-button':            { event: 'click',   handler: handlers.handleLive2dButtonClick,          useIndicators: true  },
         'clear-chat-button':        { event: 'click',   handler: handlers.handleClearChat,                  useIndicators: false },
         'prompt-input':             { event: 'keydown', handler: handlers.handlePromptKeydown,              useIndicators: false },
         'upload-image-button':      { event: 'click',   handler: handlers.handleUploadImageClick,           useIndicators: false },

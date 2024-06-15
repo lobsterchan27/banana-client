@@ -1,4 +1,4 @@
-import { textGenerate, text2speech, downloadVideo, transcribeUrl, processContext, contextTTS, combineAudio, generateSubs } from './api.js';
+import { textGenerate, text2speech, downloadVideo, transcribeUrl, processContext, contextTTS, combineAudio, generateSubs, live2d } from './api.js';
 import { collectSliderSettings, scrollToBottom, prepareImage, getFolders } from './utils.js';
 import { showProcessingIndicator, showCompletionIndicator } from './indicators.js';
 import { constructFullPrompt } from './chat.js';
@@ -151,6 +151,14 @@ async function handleGenerateSubsButtonClick(event, processingIndicator, complet
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
+async function handleLive2dButtonClick(event, processingIndicator, completionIndicator) {
+    showProcessingIndicator(processingIndicator, completionIndicator);
+
+    const contextName = document.getElementById('context-input').value;
+    await live2d(contextName)
+        .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
+}
+
 function handleClearChat(event) {
     document.getElementById('chat-display').innerHTML = '';
     selectedImages.length = 0;
@@ -201,6 +209,7 @@ export {
     handleContextTTSButtonClick,
     handleCombineAudioButtonClick,
     handleGenerateSubsButtonClick,
+    handleLive2dButtonClick,
     handleClearChat,
     handlePromptKeydown,
     handleDropdownButtonClick,

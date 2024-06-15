@@ -4,6 +4,8 @@ const { processVideo } = require("./processVideo");
 const { jsonParser } = require("./common");
 const { loadJson, getJson } = require("./utils");
 const { generateASS } = require("./subtitles");
+const { execFile } = require('child_process');
+
 const fs = require("fs");
 
 const { PROJECT_ROOT } = require("../settings");
@@ -35,27 +37,23 @@ router.post('/generate/subs', jsonParser, async function (req, res) {
   });
 });
 
-router.post("/processvideo", async function (request, response) {
-  const contextName = await request.body.contextName;
-  const contextPath = path.join(PROJECT_ROOT, "public", "context", contextName);
-
-  console.log("Processing Video:");
-  const files = {
-    baseVideoPath: `${contextPath}/${contextName}_video.mp4`,
-    baseAudioPath: `${contextPath}/${contextName}.webm`,
-    overlay: `${contextPath}/Scene.mp4`,
-    outputPath: `${contextPath}/output.mp4`,
-  };
-  const outputVideo = await processVideo(files);
-  response.json({ outputVideo });
-});
-
-router.post("/live2d"), jsonParser, async function (request, response) {
-  const contextPath = path.join('public', 'context', request.body.context);
-  const jsonPath = await getJson(contextPath, true);
+router.post("/live2d", jsonParser, async function (request, response) {
+  console.log(request.body.contextName)
+  const contextPath = path.join('public', 'context', request.body.contextName);
+  const jsonPath = await getJson(contextPath);
   const json = await loadJson(jsonPath);
 
-}
+  const videoPath = path.join(contextPath, json.original)
+  const audioPath = path.join(contextPath, json.overlayAudio)
+
+  await live2d(audioPath, videoPath, "output")
+    .then((outputPath) => {
+      response.json({ outputPath });
+    })
+    .catch((error) => {
+      response.status(500).send({ error });
+    });
+});
 
 async function live2d(audioPath, videoPath, outputPath) {
   return new Promise((resolve, reject) => {
@@ -66,16 +64,17 @@ async function live2d(audioPath, videoPath, outputPath) {
       '-o', outputPath
     ];
 
+    console.log('Executing C++ program:', exePath, args);
     execFile(exePath, args, (error, stdout, stderr) => {
       if (error) {
-        console.error('Error executing C++ program:', error);
+        // console.error('Error executing C++ program:', error);
         reject(error);
         return;
       }
       if (stderr) {
-        console.error('C++ program stderr:', stderr);
+        // console.error('C++ program stderr:', stderr);
       }
-      console.log('C++ program stdout:', stdout);
+      // console.log('C++ program stdout:', stdout);
       resolve(outputPath);
     });
   });
