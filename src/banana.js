@@ -61,7 +61,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
             busboy.on('file', async function (fieldname, file, info) {
                 console.log('File [' + fieldname + ']: filename: ' + info.filename + ', encoding: ' + info.encoding + ', mimetype: ' + info.mimeType);
 
-                fs.mkdirSync(saveFolder, { recursive: true });
+                await fs.promises.mkdir(saveFolder, { recursive: true });
                 const saveTo = path.join(saveFolder, info.filename);
                 file.pipe(fs.createWriteStream(saveTo));
 
@@ -127,7 +127,7 @@ router.post('/text2speech', jsonParser, checkRequestBody, async function (reques
 
 
         const saveFolder = path.join('public', 'tts');
-        fs.mkdirSync(saveFolder, { recursive: true });
+        await fs.promises.mkdir(saveFolder, { recursive: true });
 
         if (!request.body.voice) {
             request.body.voice = 'reference';

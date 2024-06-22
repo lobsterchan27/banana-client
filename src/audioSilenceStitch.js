@@ -71,7 +71,7 @@ async function audioSilenceStitch(contextName) {
 
     // Backup the original JSON file
     const backupPath = path.join(contextPath, 'json.bak');
-    fs.copyFileSync(jsonPath, backupPath);
+    await fs.promises.copyFile(jsonPath, backupPath);
 
     for (const [key, segment] of Object.entries(json.data)) {
       total += silenceDurations[key];

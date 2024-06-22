@@ -26,15 +26,14 @@ router.post('/generate/subs', jsonParser, async function (req, res) {
   const assContent = generateASS(subtitles);
 
   // Write ASS content to a file
-  fs.writeFile(outputPath, assContent, 'utf-8', (err) => {
-    if (err) {
-      console.error('Error writing to file:', err);
-      res.status(500).send({ message: 'Error generating subtitles' });
-    } else {
-      console.log('Successfully wrote to file.');
-      res.send({ message: 'Subtitles generated' });
-    }
-  });
+  try {
+    await fs.promises.writeFile(outputPath, assContent, 'utf-8');
+    console.log('Successfully wrote to file.');
+    res.send({ message: 'Subtitles generated' });
+  } catch (err) {
+    console.error('Error writing to file:', err);
+    res.status(500).send({ message: 'Error generating subtitles' });
+  }
 });
 
 router.post("/live2d", jsonParser, async function (request, response) {
