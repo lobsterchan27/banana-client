@@ -328,6 +328,33 @@ async function live2d(contextName) {
     }
 }
 
+/**
+ * Generates a thumbnail using the specified arguments.
+ * @param {string} contextName
+ */
+async function generateThumbnail(contextName) {
+    console.log('Generating thumbnail:', contextName);
+    try {
+        const response = await fetch('/thumbnail/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ contextName })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Response:', data);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+
+}
+
 export {
     textGenerate,
     text2speech,
@@ -338,4 +365,5 @@ export {
     combineAudio,
     generateSubs,
     live2d,
+    generateThumbnail,
 }
