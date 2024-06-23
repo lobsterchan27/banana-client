@@ -236,12 +236,12 @@ async function loadJson(filename) {
 async function getJson(folderPath, isInfoJson = false) {
   const files = await fs.promises.readdir(folderPath);
   let jsonFile
+  
   if (isInfoJson) {
     jsonFile = files.find((file) => file.endsWith("info.json"));
   } else {
     jsonFile = files.find((file) => file.endsWith(".json") && !file.endsWith('info.json'));
   }
-
 
   if (jsonFile) {
     return path.join(folderPath, jsonFile);

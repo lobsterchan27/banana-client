@@ -1,11 +1,15 @@
-require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const { checkYtDlp } = require('./src/utils')
+const {
+    HOSTNAME,
+    PORT
+} = require('settings');
+
 const app = express();
-const port = Number(process.env.PORT) || 8128;
-const hostname = process.env.HOSTNAME || '0.0.0.0';
+const port = PORT;
+const hostname = HOSTNAME;
 
 checkYtDlp();
 
@@ -31,6 +35,11 @@ app.use('/files', require('./src/files').router);
 app.use('/video', require('./src/video').router);
 
 app.use('/youtube', require('./src/youtube').router);
+
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
 
 app.listen(port, hostname, () => {
     console.log(`Server on http://${hostname}:${port}`);

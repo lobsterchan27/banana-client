@@ -1,0 +1,32 @@
+{
+    "left": {
+        "neutral": [
+            { "path": "templates/left_neutral_1.png", "mood": "neutral" },
+            { "path": "templates/left_neutral_2.png", "mood": "neutral" }
+        ],
+        "happy": [
+            { "path": "templates/left_happy_1.png", "mood": "happy" },
+            { "path": "templates/left_happy_2.png", "mood": "happy" }
+        ]
+    },
+    "right": {
+        "neutral": [
+            { "path": "templates/right_neutral_1.png", "mood": "neutral" },
+            { "path": "templates/right_neutral_2.png", "mood": "neutral" }
+        ],
+        "happy": [
+            { "path": "templates/right_happy_1.png", "mood": "happy" },
+            { "path": "templates/right_happy_2.png", "mood": "happy" }
+        ]
+    },
+    "center": {
+        "neutral": [
+            { "path": "templates/center_neutral_1.png", "mood": "neutral" },
+            { "path": "templates/center_neutral_2.png", "mood": "neutral" }
+        ],
+        "happy": [
+            { "path": "templates/center_happy_1.png", "mood": "happy" },
+            { "path": "templates/center_happy_2.png", "mood": "happy" }
+        ]
+    }
+}
