@@ -5,7 +5,7 @@ const { checkYtDlp } = require('./src/utils')
 const {
     HOSTNAME,
     PORT
-} = require('settings');
+} = require('./settings');
 
 const app = express();
 const port = PORT;
