@@ -1,0 +1,120 @@
+:host {
+    display: block;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+h2 {
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 15px;
+    margin-top: 0;
+}
+
+#addTaskForm {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button:disabled {
+    background-color: #95a5a6;
+    cursor: not-allowed;
+}
+
+.task-list {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.task-item {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.task-id {
+    font-weight: bold;
+    color: #34495e;
+    flex: 1;
+}
+
+.task-current-step {
+    flex: 1;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+.task-status {
+    flex: 0 0 100px;
+    text-align: right;
+    font-weight: 500;
+    text-transform: capitalize;
+    padding: 3px 8px;
+    border-radius: 15px;
+    font-size: 12px;
+}
+
+.status-pending { 
+    background-color: #fef9e7; 
+    color: #f39c12; 
+}
+
+.status-running { 
+    background-color: #ebf5fb; 
+    color: #3498db; 
+}
+
+.status-completed { 
+    background-color: #eafaf1; 
+    color: #2ecc71; 
+}
+
+.status-failed { 
+    background-color: #fdedec; 
+    color: #e74c3c; 
+}
+
+#removeCompletedBtn {
+    display: block;
+    width: 100%;
+    margin-top: 20px;
+    background-color: #e74c3c;
+}
+
+#removeCompletedBtn:hover {
+    background-color: #c0392b;
+}

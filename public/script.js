@@ -16,6 +16,8 @@ export const assistantToken = '\n\n### Response:\n';
 
 export const contextFolders = [];
 
+import './scripts/TaskScheduler/task-manager.js';
+
 //On page load
 document.addEventListener('DOMContentLoaded', function () {
     enableAutoResize('prompt-input');
