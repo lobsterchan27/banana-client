@@ -16,7 +16,7 @@ export const assistantToken = '\n\n### Response:\n';
 
 export const contextFolders = [];
 
-import './scripts/TaskScheduler/task-manager.js';
+import './scripts/TaskManager/TaskManager.js';
 
 //On page load
 document.addEventListener('DOMContentLoaded', function () {

@@ -1,5 +1,6 @@
 export class Task {
     constructor(youtubeId) {
+        this.id = null; // This will be set by TaskStore when the task is added
         this.youtubeId = youtubeId;
         this.status = 'pending';
         this.steps = [
@@ -11,25 +12,6 @@ export class Task {
             { name: 'Generate Subs', status: 'pending' },
             { name: 'Live2D', status: 'pending' }
         ];
-        this.data = {};
-    }
-
-    updateStatus(status) {
-        this.status = status;
-    }
-
-    updateStepStatus(stepIndex, status) {
-        if (stepIndex >= 0 && stepIndex < this.steps.length) {
-            this.steps[stepIndex].status = status;
-        }
-    }
-
-    setData(key, value) {
-        this.data[key] = value;
-    }
-
-    getData(key) {
-        return this.data[key];
     }
 
     isCompleted() {
