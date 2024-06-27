@@ -10,18 +10,16 @@ export class TaskStore extends EventTarget {
       this._readStorage();
       this._save();
     }, false);
-
-    // GETTER methods
-    this.getTaskById = (id) => this.tasks.find(task => task.id === id);
-    this.getAllTasks = () => this.tasks;
-    this.getPendingTasks = () => this.tasks.filter(task => task.status === 'pending');
-    this.getCompletedTasks = () => this.tasks.filter(task => task.status === 'completed');
-    this.hasCompletedTasks = () => this.tasks.some(task => task.status === 'completed');
   }
 
   _readStorage() {
     const stored = window.localStorage.getItem(this.localStorageKey);
-    this.tasks = stored ? JSON.parse(stored).map(taskData => Object.assign(new Task(taskData.youtubeId), taskData)) : [];
+    if (stored) {
+      const parsedTasks = JSON.parse(stored);
+      this.tasks = parsedTasks.map(taskData => Task.fromJSON(taskData));
+    } else {
+      this.tasks = [];
+    }
   }
 
   _save() {
@@ -38,7 +36,9 @@ export class TaskStore extends EventTarget {
   }
 
   updateTask(id, updatedTask) {
-    this.tasks = this.tasks.map(task => task.id === id ? { ...task, ...updatedTask } : task);
+    this.tasks = this.tasks.map(task =>
+      task.id === id ? Task.fromJSON({ ...task, ...updatedTask }) : task
+    );
     this._save();
   }
 
@@ -63,6 +63,22 @@ export class TaskStore extends EventTarget {
   removeCompletedTasks() {
     this.tasks = this.tasks.filter(task => task.status !== 'completed');
     this._save();
+  }
+
+  getTaskById(id) {
+    return this.tasks.find(task => task.id === id);
+  }
+
+  getAllTasks() {
+    return this.tasks;
+  }
+
+  getPendingTasks() {
+    return this.tasks.filter(task => task.status === 'pending');
+  }
+
+  getCompletedTasks() {
+    return this.tasks.filter(task => task.status === 'completed');
   }
 
   _generateUniqueId() {

@@ -9,6 +9,7 @@ import {
     combineAudio,
     generateSubs,
     live2d,
+    generateThumbnail,
 } from '../api.js';
 
 export class TaskManager extends HTMLElement {
@@ -82,14 +83,13 @@ export class TaskManager extends HTMLElement {
             } catch (error) {
                 console.error(`Error in step ${step}:`, error);
                 this.store.updateTask(taskId, { status: 'failed' });
-                return;
+                return; // Stop processing further steps
             }
         }
 
         this.store.updateTask(taskId, { status: 'completed' });
     }
 
-    // temporary implementation
     async processStep(taskId, stepName) {
         this.store.updateTaskStep(taskId, stepName, 'running');
         try {
@@ -99,23 +99,25 @@ export class TaskManager extends HTMLElement {
                 case 'Transcribe':
                     api_server = document.getElementById('banana-api-server').value;
                     const url = `https://www.youtube.com/watch?v=${task.youtubeId}`;
-                    await transcribeUrl({ api_server, url, minimum_interval: 2 });
+                    task.folderPath = await transcribeUrl({ api_server, url, minimum_interval: 2 });
                     break;
                 case 'Download':
                     await downloadVideo({ context: task.folderPath });
                     break;
                 case 'Process Context':
-                    settings = collectSliderSettings();
-                    await processContext(/* add necessary args */);
+                    api_server = document.getElementById('kobold-api-server').value;
+                    const settings = collectSliderSettings();
+                    settings.api_server = api_server;
+                    settings.streaming = false;
+                    await processContext({ settings, context: task.folderPath });
                     break;
                 case 'Generate Audio':
                     api_server = document.getElementById('banana-api-server').value;
-                    const context = document.getElementById('context-input').value;
                     const voice = 'sky';
                     const backend = 'tortoise';
                     const voicefix = false;
                     const vc = true;
-                    await contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } });
+                    await contextTTS({ context: task.folderPath, voice, backend, voicefix, vc, settings: { api_server } });
                     break;
                 case 'Combine Audio':
                     await combineAudio({ context: task.folderPath });
@@ -131,6 +133,7 @@ export class TaskManager extends HTMLElement {
             }
             this.store.updateTaskStep(taskId, stepName, 'completed');
         } catch (error) {
+            console.error(`Error in step ${stepName} for task ${taskId}:`, error);
             this.store.updateTaskStep(taskId, stepName, 'failed');
             throw error;
         }

@@ -18,4 +18,10 @@ export class Task {
     isCompleted() {
         return this.steps.every(step => step.status === 'completed');
     }
+
+    static fromJSON(json) {
+        const task = new Task(json.youtubeId);
+        Object.assign(task, json);
+        return task;
+    }
 }
