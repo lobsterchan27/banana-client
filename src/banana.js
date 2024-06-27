@@ -21,8 +21,8 @@ const router = express.Router();
  * @param {number} segment_length - The length of each segment in seconds.
  * @param {boolean} translate - Whether to translate the transcription.
  * @param {boolean} get_video - Whether to download the video.
- * @returns {String} The savepath of the json and corresponding storyboards. 
- * The json(savepath/savepath.json) uses the image as the index with array of the corresponding transcription.
+ * @returns {Object} The savepath of the json and corresponding storyboards.
+ * - folderPath: {string} The save path of the folder.
  */
 router.post('/transcribe/url', jsonParser, checkRequestBody, async function (request, response) {
     console.log('Transcribing URL:', request.body);
@@ -96,7 +96,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 
                 try {
                     await fs.promises.writeFile(saveTo, JSON.stringify(combinedData, null, 2));
-                    response.json({ folderPath: base_filename });
+                    response.json({ folderPath: saveFolder });
                 } catch (error) {
                     console.error('Error:', error);
                     return response.status(500).send('An error occurred');

@@ -48,6 +48,9 @@ export class TaskStore extends EventTarget {
       task.steps = task.steps.map(step =>
         step.name === stepName ? { ...step, status } : step
       );
+      if (task.isCompleted()) {
+        task.status = 'completed';
+      }
       this._save();
     }
   }

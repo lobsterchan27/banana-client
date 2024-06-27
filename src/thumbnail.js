@@ -25,10 +25,6 @@ async function loadTemplates() {
 async function overlayTemplate(originalPath, templatePath, outputPath) {
     try {
 
-        const client = new vision.ImageAnnotatorClient({
-            keyFilename: 'vision-426819-7efb56f51d64.json'
-        });
-
         // Load the original image to get its dimensions
         const originalImage = sharp(originalPath);
         const originalMetadata = await originalImage.metadata();
@@ -79,6 +75,10 @@ function pickTemplate(position, mood) {
 
 async function analyzeImageForTemplateOverlay(imagePath) {
     try {
+        const client = new vision.ImageAnnotatorClient({
+            keyFilename: 'vision-426819-7efb56f51d64.json'
+        });
+
         // Perform object localization
         const [objectResult] = await client.objectLocalization(imagePath);
         const objects = objectResult.localizedObjectAnnotations;

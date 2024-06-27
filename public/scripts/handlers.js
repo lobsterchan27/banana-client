@@ -83,13 +83,9 @@ async function handleDownloadVideoButtonClick(event, processingIndicator, comple
 
     const args = {}
     args.context = document.getElementById('context-input').value;
-    try {
-        await downloadVideo(args);
-    } catch (error) {
-        console.error("Failed to download video:", error);
-    } finally {
-        showCompletionIndicator(processingIndicator, completionIndicator);
-    }
+
+    await downloadVideo(args);
+    showCompletionIndicator(processingIndicator, completionIndicator);
 }
 
 async function handleTranscribeUrlButtonClick(event, processingIndicator, completionIndicator) {
@@ -126,10 +122,10 @@ async function handleContextTTSButtonClick(event, processingIndicator, completio
 
     const api_server = document.getElementById('banana-api-server').value;
     const context = document.getElementById('context-input').value;
-    const voice = 'sky'
-    const backend = 'tortoise'
-    const voicefix = true
-    const vc = true
+    const voice = 'sky';
+    const backend = 'tortoise';
+    const voicefix = false;
+    const vc = true;
 
     await contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
@@ -138,16 +134,16 @@ async function handleContextTTSButtonClick(event, processingIndicator, completio
 async function handleCombineAudioButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
-    const contextName = document.getElementById('context-input').value;
-    await combineAudio(contextName)
+    const context = document.getElementById('context-input').value;
+    await combineAudio({ context })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 
 async function handleGenerateSubsButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
-    const contextName = document.getElementById('context-input').value;
-    await generateSubs(contextName)
+    const context = document.getElementById('context-input').value;
+    await generateSubs({ context })
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 

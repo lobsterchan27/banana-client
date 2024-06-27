@@ -2,6 +2,8 @@
 import { enableAutoResize, loadSliders, getFolders, withIndicators } from './scripts/utils.js';
 import * as handlers from './scripts/handlers.js';
 
+import './scripts/TaskManager/TaskManager.js';
+
 
 export const state = {
     controller: null,
@@ -15,8 +17,6 @@ export const userToken = '\n\n### Instruction:\n';
 export const assistantToken = '\n\n### Response:\n';
 
 export const contextFolders = [];
-
-import './scripts/TaskManager/TaskManager.js';
 
 //On page load
 document.addEventListener('DOMContentLoaded', function () {

@@ -115,17 +115,21 @@ async function text2speech(args) {
  * @param {string} args.context - The URL to transcribe.
  */
 async function downloadVideo(args) {
-    const payload = {
-        context: args.context,
-    }
+    try {
+        const payload = {
+            context: args.context,
+        }
 
-    return fetch('/youtube/download/context', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    });
+        return fetch('/youtube/download/context', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.error("Failed to download video:", error);
+    }
 }
 
 /**
@@ -267,16 +271,21 @@ async function contextTTS(args) {
 
 /**
  * Combines the audio files in the specified context folder.
- * @param {string} contextName - The name of the folder containing the audio files to combine.
+ * @param {Object} args - An object containing the arguments for combining the audio.
+ * @param {string} args.context - The name of the folder containing the audio files to combine.
  */
-async function combineAudio(contextName) {
+async function combineAudio(args) {
+    const payload = {
+        context: args.context
+    }
+
     try {
         const response = await fetch('/audio/generate/final', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ contextName })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -288,16 +297,20 @@ async function combineAudio(contextName) {
 
 /**
  * Generates subtitles for the audio files in the specified context folder.
- * @param {string} contextName - The name of the folder containing the audio files.
+ * @param {Object} args - An object containing the arguments for generating subtitles.
+ * @param {string} args.context - The name of the folder containing the audio files.
  */
-async function generateSubs(contextName) {
+async function generateSubs(args) {
+    const payload = {
+        context: args.context
+    }
     try {
         const response = await fetch('/video/generate/subs', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ contextName })
+            body: JSON.stringify(payload)
         });
 
         const data = await response.json();
@@ -309,9 +322,13 @@ async function generateSubs(contextName) {
 
 /**
  * Generates a live2d video using the specified context.
- * @param {string} contextName - The name of the folder containing the context.
+ * @param {Object} args - An object containing the arguments for generating the live2d video.
+ * @param {string} context - The name of the folder containing the context.
  */
-async function live2d(contextName) {
+async function live2d(args) {
+    const payload = {
+        context: args.context
+    }
     try {
         const response = await fetch('/video/live2d', {
             method: 'POST',

@@ -1,5 +1,15 @@
 import { TaskStore } from './TaskStore.js';
 import { TaskManagerUI } from './TaskManagerUI.js';
+import { collectSliderSettings } from '../utils.js';
+import {
+    transcribeUrl,
+    downloadVideo,
+    processContext,
+    contextTTS,
+    combineAudio,
+    generateSubs,
+    live2d,
+} from '../api.js';
 
 export class TaskManager extends HTMLElement {
     constructor() {
@@ -18,7 +28,7 @@ export class TaskManager extends HTMLElement {
         this.processQueue();
     }
 
-    addTask(youtubeId) {
+    async addTask(youtubeId) {
         const newTask = this.store.addTask(youtubeId);
         if (this.activeTasks.size === 0) {
             this.processQueue();
@@ -33,7 +43,7 @@ export class TaskManager extends HTMLElement {
     async processQueue() {
         while (true) {
             const pendingTasks = this.store.getPendingTasks();
-            
+
             while (this.activeTasks.size < this.maxConcurrentTasks && pendingTasks.length > 0) {
                 const task = pendingTasks.shift();
                 this.activeTasks.add(task.id);
@@ -56,11 +66,21 @@ export class TaskManager extends HTMLElement {
 
         this.store.updateTask(taskId, { status: 'running' });
 
-        for (const step of task.steps) {
+        const steps = [
+            'Transcribe',
+            'Download',
+            'Process Context',
+            'Generate Audio',
+            'Combine Audio',
+            'Generate Subs',
+            'Live2D',
+        ];
+
+        for (const step of steps) {
             try {
-                await this.processStep(taskId, step.name, this.getStepFunction(step.name, task.youtubeId));
+                await this.processStep(taskId, step);
             } catch (error) {
-                console.error(`Error in step ${step.name}:`, error);
+                console.error(`Error in step ${step}:`, error);
                 this.store.updateTask(taskId, { status: 'failed' });
                 return;
             }
@@ -69,33 +89,51 @@ export class TaskManager extends HTMLElement {
         this.store.updateTask(taskId, { status: 'completed' });
     }
 
-    async processStep(taskId, stepName, stepFunction) {
+    // temporary implementation
+    async processStep(taskId, stepName) {
         this.store.updateTaskStep(taskId, stepName, 'running');
         try {
-            await stepFunction();
+            const task = this.store.getTaskById(taskId);
+            let api_server;
+            switch (stepName) {
+                case 'Transcribe':
+                    api_server = document.getElementById('banana-api-server').value;
+                    const url = `https://www.youtube.com/watch?v=${task.youtubeId}`;
+                    await transcribeUrl({ api_server, url, minimum_interval: 2 });
+                    break;
+                case 'Download':
+                    await downloadVideo({ context: task.folderPath });
+                    break;
+                case 'Process Context':
+                    settings = collectSliderSettings();
+                    await processContext(/* add necessary args */);
+                    break;
+                case 'Generate Audio':
+                    api_server = document.getElementById('banana-api-server').value;
+                    const context = document.getElementById('context-input').value;
+                    const voice = 'sky';
+                    const backend = 'tortoise';
+                    const voicefix = false;
+                    const vc = true;
+                    await contextTTS({ context, voice, backend, voicefix, vc, settings: { api_server } });
+                    break;
+                case 'Combine Audio':
+                    await combineAudio({ context: task.folderPath });
+                    break;
+                case 'Generate Subs':
+                    await generateSubs({ context: task.folderPath });
+                    break;
+                case 'Live2D':
+                    await live2d({ context: task.folderPath });
+                    break;
+                default:
+                    throw new Error(`Unknown step: ${stepName}`);
+            }
             this.store.updateTaskStep(taskId, stepName, 'completed');
         } catch (error) {
             this.store.updateTaskStep(taskId, stepName, 'failed');
             throw error;
         }
-    }
-
-    getStepFunction(stepName, youtubeId) {
-        const simulateApiCall = (duration) => new Promise((resolve) => {
-            setTimeout(resolve, duration);
-        });
-
-        const stepFunctions = {
-            'Transcribe': () => simulateApiCall(3000),
-            'Download': () => simulateApiCall(2000),
-            'Process Context': () => simulateApiCall(2500),
-            'Generate Audio': () => simulateApiCall(4000),
-            'Combine Audio': () => simulateApiCall(1500),
-            'Generate Subs': () => simulateApiCall(2000),
-            'Live2D': () => simulateApiCall(5000)
-        };
-
-        return stepFunctions[stepName];
     }
 }
 

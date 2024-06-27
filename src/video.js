@@ -13,7 +13,7 @@ const { PROJECT_ROOT } = require("../settings");
 const router = express.Router();
 
 router.post('/generate/subs', jsonParser, async function (req, res) {
-  const { contextName } = req.body;
+  const contextName = req.body.context;
   const contextPath = path.join("public", "context", contextName);
   const jsonPath = await getJson(contextPath);
   const outputPath = path.join(contextPath, `${contextName}.ass`);

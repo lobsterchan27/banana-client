@@ -1,8 +1,9 @@
 export class Task {
     constructor(youtubeId) {
-        this.id = null; // This will be set by TaskStore when the task is added
+        this.id = null;
         this.youtubeId = youtubeId;
         this.status = 'pending';
+        this.folderPath = null;
         this.steps = [
             { name: 'Transcribe', status: 'pending' },
             { name: 'Download', status: 'pending' },
