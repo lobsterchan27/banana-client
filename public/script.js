@@ -57,3 +57,23 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', handlers.handleDropdownButtonClick);
     });
 });
+
+window.addEventListener('unhandledrejection', function (event) {
+    // Log the error
+    console.error('Unhandled promise rejection:', event.reason);
+
+    // Prevent the default handling (suppresses console warnings)
+    event.preventDefault();
+
+    // Optionally, you could update UI here to show a general error message
+    const errorBanner = document.getElementById('error-banner');
+    if (errorBanner) {
+        errorBanner.textContent = 'An unexpected error occurred. Please try again later.';
+        errorBanner.style.display = 'block';
+    }
+
+    // Optionally, send error to your error tracking service
+    if (typeof errorTrackingService !== 'undefined') {
+        errorTrackingService.logError(event.reason);
+    }
+});
