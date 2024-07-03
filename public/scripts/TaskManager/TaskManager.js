@@ -99,7 +99,8 @@ export class TaskManager extends HTMLElement {
                 case 'Transcribe':
                     api_server = document.getElementById('banana-api-server').value;
                     const url = `https://www.youtube.com/watch?v=${task.youtubeId}`;
-                    task.folderPath = await transcribeUrl({ api_server, url, minimum_interval: 2 });
+                    const result = await transcribeUrl({ api_server, url, minimum_interval: 2 });
+                    task.folderPath = result.folderPath;
                     break;
                 case 'Download':
                     await downloadVideo({ context: task.folderPath });

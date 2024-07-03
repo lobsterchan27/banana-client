@@ -96,7 +96,7 @@ router.post('/transcribe/url', jsonParser, checkRequestBody, async function (req
 
                 try {
                     await fs.promises.writeFile(saveTo, JSON.stringify(combinedData, null, 2));
-                    response.json({ folderPath: saveFolder });
+                    response.json({ folderPath: path.basename(saveFolder) });
                 } catch (error) {
                     console.error('Error:', error);
                     return response.status(500).send('An error occurred');
