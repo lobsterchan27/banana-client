@@ -185,7 +185,7 @@ function handleUploadImageClick(event) {
 }
 
 async function handleImageInputChange(event) {
-    const files = this.files;
+    const files = event.target.files;
     if (files.length > 0) {
         const file = files[0];
         const reader = new FileReader();
