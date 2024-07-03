@@ -37,8 +37,9 @@ router.post('/generate/subs', jsonParser, async function (req, res) {
 });
 
 router.post("/live2d", jsonParser, async function (request, response) {
-  console.log(request.body.contextName)
-  const contextPath = path.join('public', 'context', request.body.contextName);
+  console.log(request.body);
+  const context = request.body.context;
+  const contextPath = path.join('public', 'context', context);
   const jsonPath = await getJson(contextPath);
   const json = await loadJson(jsonPath);
 

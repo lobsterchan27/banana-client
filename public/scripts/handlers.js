@@ -150,8 +150,8 @@ async function handleGenerateSubsButtonClick(event, processingIndicator, complet
 async function handleLive2dButtonClick(event, processingIndicator, completionIndicator) {
     showProcessingIndicator(processingIndicator, completionIndicator);
 
-    const contextName = document.getElementById('context-input').value;
-    await live2d(contextName)
+    const context = document.getElementById('context-input').value;
+    await live2d({context})
         .finally(() => showCompletionIndicator(processingIndicator, completionIndicator));
 }
 

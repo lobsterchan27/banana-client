@@ -115,20 +115,35 @@ async function text2speech(args) {
  * @param {string} args.context - The URL to transcribe.
  */
 async function downloadVideo(args) {
+    console.log('Downloading video:', args);
     try {
         const payload = {
             context: args.context,
-        }
-
-        return fetch('/youtube/download/context', {
+        };
+        const response = await fetch('/youtube/download/context', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
+        console.log('Download response:', data);
+
+        return data;
     } catch (error) {
-        console.error("Failed to download video:", error);
+        console.error('Error in downloadVideo:', error);
+        throw error;
     }
 }
 
@@ -163,7 +178,6 @@ async function transcribeUrl(args) {
         minimum_interval = null,
         fixed_interval = null
     } = args;
-
     const payload = {
         api_server,
         url,
@@ -176,7 +190,6 @@ async function transcribeUrl(args) {
         translate,
         get_video
     }
-
     try {
         const response = await fetch('/banana/transcribe/url', {
             method: 'POST',
@@ -186,21 +199,22 @@ async function transcribeUrl(args) {
             body: JSON.stringify(payload)
         });
 
-        // Check if the request was successful
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Convert the response to JSON
         const data = await response.json();
 
-        // Log the response data
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
         console.log('Response:', data);
 
-        // Return the response data
         return data;
     } catch (error) {
-        console.error('Error sending request:', error);
+        console.error('Error in transcribeUrl:', error);
+        throw error;
     }
 }
 
@@ -232,9 +246,15 @@ async function processContext(args) {
         }
 
         const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error
     }
 }
 
@@ -263,9 +283,14 @@ async function contextTTS(args) {
         }
 
         const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     }
 }
 
@@ -288,10 +313,18 @@ async function combineAudio(args) {
             body: JSON.stringify(payload)
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     }
 }
 
@@ -313,10 +346,20 @@ async function generateSubs(args) {
             body: JSON.stringify(payload)
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     }
 }
 
@@ -335,19 +378,30 @@ async function live2d(args) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ contextName })
+            body: JSON.stringify(payload)
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     }
 }
 
 /**
  * Generates a thumbnail using the specified arguments.
- * @param {string} contextName
+ * @param {Object} args - An object containing the arguments for generating the thumbnail.
+ * @param {string} context - The foldername returned from transcription.
  */
 async function generateThumbnail(contextName) {
     console.log('Generating thumbnail:', contextName);
@@ -365,11 +419,16 @@ async function generateThumbnail(contextName) {
         }
 
         const data = await response.json();
+
+        if (data.error) {
+            throw new Error(`API error: ${data.error}`);
+        }
+
         console.log('Response:', data);
     } catch (error) {
         console.error('Error:', error);
+        throw error;
     }
-
 }
 
 export {
