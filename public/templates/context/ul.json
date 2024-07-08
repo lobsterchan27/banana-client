@@ -1,0 +1,12 @@
+{
+    "story_string": "### Instruction:\n{{#if system}}{{system}}\n\n{{/if}}{{#if wiBefore}}{{wiBefore}}\n\n{{/if}}### Character Sheet:\n{{#if description}}{{description}}\n\n{{/if}}{{#if personality}}{{personality}}\n\n{{/if}}{{#if scenario}}Scenario: {{scenario}}\n\n{{/if}}{{#if persona}}Description of {{user}}: {{persona}}\n\n{{/if}}{{#if wiAfter}}{{wiAfter}}{{/if}}",
+    "example_separator": "Example roleplay chat:",
+    "chat_start": "Taking the above information into consideration,\nyou must engage in a roleplay conversation with {{user}} below this line.\nDo not write {{user}}'s dialogue lines in your responses.\n",
+    "use_stop_strings": false,
+    "allow_jailbreak": false,
+    "always_force_name2": true,
+    "trim_sentences": true,
+    "include_newline": true,
+    "single_line": false,
+    "name": "ul"
+}
