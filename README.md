@@ -2,6 +2,8 @@
 
 Banana Client is a powerful web application for AI-assisted video content creation, offering features like text generation, speech synthesis, video processing, and subtitle generation. This is a work-in-progress local PC WebUI client for use with a corresponding WhisperX and LLM servers.
 
+> **Note: This application has only been tested on Windows operating systems.**
+
 ## Features
 
 - Text generation using AI models
@@ -67,6 +69,11 @@ Banana Client is a powerful web application for AI-assisted video content creati
   - [ ] Use this information along with timestamped transcriptions to determine how to trigger responses from the LLM.
 - [ ] Add support for outputting video in different languages.
 - [X] Improve integration with WhisperX server for transcription.
+
+## Known Issues and Limitations
+
+- This application has only been tested on Windows. Compatibility with other operating systems is not guaranteed.
+- Some features may require additional setup or external dependencies. Please refer to the documentation for specific requirements.
 
 ## Contributing
 
